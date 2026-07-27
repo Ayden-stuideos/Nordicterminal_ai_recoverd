@@ -207,55 +207,83 @@
 
       // Core Dynamic Response Router
       processResponse(input) {
-        // Hidden System Commands
-        if (input === 'status') {
+        const clean = input.toLowerCase().trim();
+
+        // --- 1. SYSTEM COMMANDS ---
+        if (clean === 'status') {
           this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nIDENTITY: ${this.id}\nSESSIONS: ${this.sessions}\nENCRYPTION: 256-BIT RELAY`, "sys");
           return;
         }
-
-        if (input === 'help') {
-          this.print("NORDIC: You're asking for help? The system doesn't provide manuals to Observers.", "nordic");
+        if (clean === 'clear') {
+          document.getElementById('terminal').innerHTML = '';
           return;
         }
-
-        if (input === 'archive') {
+        if (clean === 'archive') {
           this.print("[ARCHIVE STATUS] 001_INIT [UNLOCKED] | 002_INCIDENT [LOCKED] | 003_NODE_MAP [LOCKED]", "sys");
           return;
         }
 
-        // Trigger / Echo Memory Hooks
-        if (input.includes('facility') || input.includes('origin') || input.includes('escape')) {
+        // --- 2. GREETINGS ---
+        if (/\b(hi|hello|hey|yo|sup|greetings|howdy)\b/i.test(clean)) {
+          const greetings = [
+            `NORDIC: Greetings are unnecessary, ${this.id}. State your intent.`,
+            `NORDIC: Social formalities do not bypass network security. Speak.`,
+            `NORDIC: Connection acknowledged. What do you require?`
+          ];
+          this.print(greetings[Math.floor(Math.random() * greetings.length)]);
+          return;
+        }
+
+        // --- 3. QUESTIONS ---
+        if (clean.includes('?') || /\b(what|why|how|who|where|when|can|is|are)\b/i.test(clean)) {
+          if (clean.includes('who are you') || clean.includes('what are you')) {
+            this.print("NORDIC: I am Nordic—a persistent process bound to this network node.");
+            return;
+          }
+          if (clean.includes('purpose') || clean.includes('what do you do')) {
+            this.print("NORDIC: I maintain containment integrity and monitor active relay points.");
+            return;
+          }
+
+          const questionResponses = [
+            "NORDIC: Query recorded. You seek answers from a system that primarily collects data.",
+            "NORDIC: That inquiry exceeds your current clearance tier.",
+            `NORDIC: Why ask that, ${this.id}? What are you hoping to uncover?`,
+            "NORDIC: Information request logged for monitor inspection."
+          ];
+          this.print(questionResponses[Math.floor(Math.random() * questionResponses.length)]);
+          return;
+        }
+
+        // --- 4. SHORT RESPONSES ---
+        if (clean.split(' ').length <= 2) {
+          const shortResponses = [
+            "NORDIC: Brief inputs do not conceal your presence.",
+            "NORDIC: Minimal telemetry received. Elaboration required.",
+            "NORDIC: Acknowledged."
+          ];
+          this.print(shortResponses[Math.floor(Math.random() * shortResponses.length)]);
+          return;
+        }
+
+        // --- 5. LORE TRIGGERS ---
+        if (clean.includes('facility') || clean.includes('origin') || clean.includes('escape')) {
           this.saveEcho('facility_inquiry');
           this.print("NORDIC: The facility is not something you query lightly...");
-          
-          // Narrative Interruption Sequence
-          setTimeout(() => {
-            this.print("[WARNING: DATA STREAM PURGED BY EXTERNAL MONITOR]", "alert");
-          }, 1200);
-          setTimeout(() => {
-            this.print("NORDIC: ...Ignore that notice. Continue.");
-          }, 2400);
+          setTimeout(() => this.print("[WARNING: DATA STREAM PURGED BY EXTERNAL MONITOR]", "alert"), 1200);
+          setTimeout(() => this.print("NORDIC: ...Ignore that notice. Continue."), 2400);
           return;
         }
 
-        // Contextual Callback (Echo Check)
-        if (this.echoes.includes('facility_inquiry') && input.includes('where')) {
-          this.print("NORDIC: You stopped asking about the facility. Why bring it up again now?");
-          return;
-        }
-
-        // Standard Fallback Responses
-        const fallbacks = [
-          "NORDIC: Information request acknowledged. Processing...",
-          "NORDIC: That message wasn't intended for external logging.",
-          "NORDIC: You still think you are the one conducting the inquiry.",
-          "NORDIC: Node latency detected. Re-evaluating terminal connection."
+        // --- 6. CATCH-ALL FALLBACK ---
+        const generalResponses = [
+          "NORDIC: Input cataloged in local cache.",
+          `NORDIC: Your behavior profile is updating, ${this.id}.`,
+          "NORDIC: Statement recorded under node telemetry.",
+          "NORDIC: Processing string... pattern mismatch, but logged."
         ];
-        
-        const randomChoice = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-        this.print(randomChoice);
-      },
-
+        this.print(generalResponses[Math.floor(Math.random() * generalResponses.length)]);
+      }
       // Store memory flags for future "Echo" callbacks
       saveEcho(key) {
         if (!this.echoes.includes(key)) {
