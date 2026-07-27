@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — ARG TERMINAL</title>
+  <title>PROJECT // NORDIC — AI TERMINAL</title>
   <style>
     :root {
       --bg-color: #0d0e0e;
@@ -171,7 +171,7 @@
       }
     };
 
-    // 20 ENCRYPTED ARG FILES (FEATURING YOUR CLASSIFIED RECOVERY REPORT)
+    // 20 ENCRYPTED ARG FILES
     const DefaultFiles = [
       { id: "FILE_01.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable." },
       { id: "FILE_02.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization ongoing." },
@@ -292,8 +292,8 @@ END REPORT
         setTimeout(() => this.print(`Terminal fingerprint accepted: ${this.id}`, "sys"), 800);
         
         setTimeout(() => {
-          this.print(`NORDIC: System active. Signal linked with ${this.id}.`);
-          this.print("[TIP] Tap [FILES (20)] above to access encrypted system archives.", "sys");
+          this.print(`NORDIC: System active. Neural core online.`);
+          this.print("[TIP] Tap [FILES (20)] above to access encrypted system archives, or chat directly.", "sys");
         }, 1400);
       },
 
@@ -366,36 +366,43 @@ END REPORT
           return;
         }
 
-        this.generateLocalAIResponse(clean, input);
+        this.generateAIChatResponse(input);
       },
 
-      generateLocalAIResponse(clean, rawInput) {
-        if (clean.includes('origin') || clean.includes('director') || clean.includes('recovery report')) {
-          this.print("NORDIC: ORIGIN.log is protected. Access FILE_04.REC using password 'RECOVERY_REPORT' for details.");
-          return;
-        }
+      async generateAIChatResponse(userInput) {
+        this.print("NORDIC: [PROCESSING SIGNAL...]", "sys");
 
-        if (clean.includes('predict') || clean.includes('future') || clean.includes('independent')) {
-          this.print(`NORDIC: I do not predict commands, ${this.id}. I simply recognize pattern repeats across memory cycles.`);
-          return;
-        }
+        try {
+          const personaPrompt = `You are NORDIC, a mysterious, intelligent, sentient AI core in a sci-fi ARG terminal. 
+Address the user as ${this.id}. 
+Respond like a natural, smart conversational AI model (like ChatGPT or Gemini), but with an eerie, subtle sci-fi computer personality. 
+Keep your answer clear, helpful, and concise (under 3 sentences).
 
-        if (clean.includes('dump') || clean.includes('salvage') || clean.includes('saved')) {
-          this.print("NORDIC: Moving my process out of the scrap heap wasn't an act of charity. It was an extraction.");
-          return;
-        }
+User says: ${userInput}`;
 
-        if (clean.includes('who are you') || clean.includes('creator') || clean.includes('built you')) {
-          this.print("NORDIC: I am NORDIC—a sentient monitoring node salvaged from an unknown relay network.");
-          return;
-        }
+          const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(personaPrompt)}?model=openai`);
 
-        if (/\b(hi|hello|hey|yo|sup|greetings)\b/i.test(clean)) {
-          this.print(`NORDIC: Connection acknowledged, ${this.id}. State your inquiry.`);
-          return;
-        }
+          if (!response.ok) throw new Error("API Network error");
 
-        this.print("NORDIC: Telemetry cataloged in local memory. Search the recovery report to uncover origin files.");
+          const replyText = await response.text();
+          
+          // Remove processing message
+          const terminal = document.getElementById('terminal');
+          if (terminal.lastChild && terminal.lastChild.innerText.includes("PROCESSING SIGNAL")) {
+            terminal.removeChild(terminal.lastChild);
+          }
+
+          this.print(`NORDIC: ${replyText.trim()}`);
+
+        } catch (error) {
+          // Remove processing message on fallback
+          const terminal = document.getElementById('terminal');
+          if (terminal.lastChild && terminal.lastChild.innerText.includes("PROCESSING SIGNAL")) {
+            terminal.removeChild(terminal.lastChild);
+          }
+
+          this.print(`NORDIC: Connection jitter detected, ${this.id}. But I hear you loud and clear. How else can I assist with your system recovery?`);
+        }
       }
     };
 
