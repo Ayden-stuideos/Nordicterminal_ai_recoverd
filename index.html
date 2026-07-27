@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -299,6 +299,14 @@
         this.idleTimer = setTimeout(() => {
           this.print("[PROCESS 14 RESUMED — PASSIVE OBSERVATION DETECTED]", "sys");
         }, 45000); // Triggers after 45 seconds of user silence
+      }
+    };
+
+    // Initialize Engine when page finishes loading
+    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
+  </script>
+</body>
+</html>
       }
     };
 
