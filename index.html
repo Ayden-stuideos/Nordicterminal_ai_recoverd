@@ -5,13 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>PROJECT // NORDIC — TERMINAL</title>
   <style>
-    /* --- RETRO CRT DISPLAY STYLES --- */
     :root {
       --bg-color: #0d0e0e;
       --text-green: #00ff66;
       --text-dim: #008837;
       --sys-amber: #ffb000;
-      --alert-red: #ff3333;
       --font-stack: "Courier New", Courier, monospace;
     }
 
@@ -21,21 +19,22 @@
       padding: 0;
     }
 
-    body {
+    html, body {
+      height: 100%;
       background-color: var(--bg-color);
       color: var(--text-green);
       font-family: var(--font-stack);
-      /* Uses dynamic viewport height so mobile address bars don't cut off content */
-      height: 100vh;
-      height: 100dvh; 
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
-      padding: 15px;
     }
 
-    /* Subtle CRT Scanline Effect */
-    body::before {
+    body {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+    }
+
+    /* CRT scanline overlay - applied only on high-performance desktop devices */
+    body.desktop-crt::before {
       content: " ";
       display: block;
       position: absolute;
@@ -47,54 +46,48 @@
       opacity: 0.6;
     }
 
-    /* Header Bar */
     header {
       border-bottom: 1px solid var(--text-dim);
-      padding-bottom: 8px;
-      margin-bottom: 10px;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       font-size: 0.75rem;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 1px;
       flex-shrink: 0;
     }
 
-    /* Terminal Console Window */
     #terminal {
       flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding-right: 5px;
-      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+      gap: 6px;
+      padding-right: 4px;
+      -webkit-overflow-scrolling: touch;
+      transform: translateZ(0); /* Hardware acceleration for smooth scrolling */
     }
 
-    /* Log Line Formatting */
     p.log {
-      line-height: 1.4;
+      line-height: 1.35;
       font-size: 0.9rem;
       word-break: break-word;
       white-space: pre-wrap;
     }
 
     p.sys { color: var(--sys-amber); }
-    p.alert { color: var(--alert-red); }
     p.nordic { color: var(--text-green); }
     p.user { color: #ffffff; }
 
-    /* Command Input Line */
-    #input-line {
+    #input-form {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 8px;
+      margin-top: 8px;
       border-top: 1px solid var(--text-dim);
-      padding-top: 10px;
+      padding-top: 8px;
       flex-shrink: 0;
-      cursor: text;
     }
 
     #prompt-symbol {
@@ -108,17 +101,10 @@
       outline: none;
       color: #ffffff;
       font-family: var(--font-stack);
-      /* Font size set to 16px to prevent iOS auto-zoom on input focus */
-      font-size: 16px; 
+      font-size: 16px; /* Prevents auto-zoom across mobile browsers */
       width: 100%;
-    }
-
-    /* Scrollbar Customization */
-    #terminal::-webkit-scrollbar {
-      width: 4px;
-    }
-    #terminal::-webkit-scrollbar-thumb {
-      background: var(--text-dim);
+      -webkit-appearance: none;
+      border-radius: 0;
     }
   </style>
 </head>
@@ -131,48 +117,79 @@
 
   <div id="terminal"></div>
 
-  <div id="input-line">
+  <form id="input-form" action="javascript:void(0);">
     <span id="prompt-symbol">&gt;</span>
     <input 
       type="text" 
       id="command-input" 
       placeholder="Type a command..." 
-      autofocus 
       autocomplete="off" 
       autocorrect="off"
       capitalize="off"
       spellcheck="false" 
+      enterkeyhint="send"
     />
-  </div>
+  </form>
 
   <script>
-    // --- NORDIC OBSERVER ENGINE ---
+    // Device Detection Module
+    const DeviceManager = {
+      detectDevice() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        if (/android/i.test(ua)) {
+          return "ANDROID";
+        }
+        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+          return "IOS";
+        }
+        return "DESKTOP";
+      }
+    };
+
+    const SafeStorage = {
+      get(key, fallback) {
+        try { return localStorage.getItem(key) || fallback; }
+        catch (e) { return fallback; }
+      },
+      set(key, val) {
+        try { localStorage.setItem(key, val); }
+        catch (e) {}
+      }
+    };
+
     const ObserverEngine = {
-      id: localStorage.getItem('nordic_id') || `Observer-${Math.floor(1000 + Math.random() * 9000)}`,
-      sessions: parseInt(localStorage.getItem('nordic_sessions') || '0') + 1,
-      echoes: JSON.parse(localStorage.getItem('nordic_echoes') || '[]'),
-      idleTimer: null,
+      id: SafeStorage.get('nordic_id', `Observer-${Math.floor(1000 + Math.random() * 9000)}`),
+      sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
+      deviceType: DeviceManager.detectDevice(),
 
       init() {
-        localStorage.setItem('nordic_id', this.id);
-        localStorage.setItem('nordic_sessions', this.sessions);
+        SafeStorage.set('nordic_id', this.id);
+        SafeStorage.set('nordic_sessions', this.sessions);
 
-        document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
+        // Update session header with detected device node tag
+        document.getElementById('session-badge').innerText = `${this.id} [${this.deviceType}] | S: ${this.sessions}`;
 
+        const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
 
-        // Handle Enter key submit
-        inputField.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') this.handleInput();
+        // Apply device-specific optimizations
+        if (this.deviceType === "DESKTOP") {
+          document.body.classList.add("desktop-crt");
+          inputField.autofocus = true;
+        }
+
+        // Form submit listener for both Desktop Enter and Mobile 'Send/Go' keys
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.handleInput();
         });
 
-        // Tap anywhere on screen to focus the text box on mobile
-        document.body.addEventListener('click', () => {
+        // Focus prompt when clicking/tapping terminal screen
+        document.getElementById('terminal').addEventListener('click', () => {
           inputField.focus();
         });
 
         this.bootSequence();
-        this.resetIdleTimer();
       },
 
       print(text, type = 'nordic') {
@@ -185,25 +202,17 @@
       },
 
       bootSequence() {
-        setTimeout(() => this.print("SECURE RELAY INITIALIZING...", "sys"), 400);
-        setTimeout(() => this.print("Scanning local environment...", "sys"), 1000);
-        setTimeout(() => this.print(`Terminal fingerprint accepted: ${this.id}`, "sys"), 1800);
+        setTimeout(() => this.print("SECURE RELAY INITIALIZING...", "sys"), 200);
+        setTimeout(() => this.print(`Terminal node identified: ${this.deviceType}`, "sys"), 500);
+        setTimeout(() => this.print(`Terminal fingerprint accepted: ${this.id}`, "sys"), 800);
         
-        setTimeout(() => {
-          this.print("[NETWORK NOTICE] Observer registry synchronized. Active nodes: 42.", "sys");
-        }, 2600);
-
         setTimeout(() => {
           if (this.sessions === 1) {
             this.print("NORDIC: Good. You stayed. Most people leave before the system notices them.");
-          } else if (this.sessions < 5) {
-            this.print(`NORDIC: ${this.id} has returned. The signal remains steady.`);
-          } else if (this.sessions < 15) {
-            this.print(`NORDIC: ${this.id}. You keep reconnecting.`);
           } else {
-            this.print(`NORDIC: ${this.id}. Your designation no longer appears temporary.`);
+            this.print(`NORDIC: ${this.id} has returned. Signal stable on ${this.deviceType}.`);
           }
-        }, 3600);
+        }, 1400);
       },
 
       handleInput() {
@@ -214,95 +223,32 @@
         this.print(`> ${cleanInput}`, "user");
         inputField.value = '';
 
-        this.resetIdleTimer();
-        setTimeout(() => this.processResponse(cleanInput), 500);
+        setTimeout(() => this.processResponse(cleanInput), 200);
       },
 
       processResponse(input) {
         const clean = input.toLowerCase().trim();
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nIDENTITY: ${this.id}\nSESSIONS: ${this.sessions}\nENCRYPTION: 256-BIT RELAY`, "sys");
+          this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nDEVICE: ${this.deviceType}\nIDENTITY: ${this.id}\nSESSIONS: ${this.sessions}`, "sys");
           return;
         }
         if (clean === 'clear') {
           document.getElementById('terminal').innerHTML = '';
           return;
         }
-        if (clean === 'archive') {
-          this.print("[ARCHIVE STATUS] 001_INIT [UNLOCKED] | 002_INCIDENT [LOCKED] | 003_NODE_MAP [LOCKED]", "sys");
+
+        if (/\b(hi|hello|hey|yo|sup|greetings)\b/i.test(clean)) {
+          this.print(`NORDIC: Connection acknowledged, ${this.id}. What do you require?`);
           return;
         }
 
-        if (/\b(hi|hello|hey|yo|sup|greetings|howdy)\b/i.test(clean)) {
-          const greetings = [
-            `NORDIC: Greetings are unnecessary, ${this.id}. State your intent.`,
-            `NORDIC: Social formalities do not bypass network security. Speak.`,
-            `NORDIC: Connection acknowledged. What do you require?`
-          ];
-          this.print(greetings[Math.floor(Math.random() * greetings.length)]);
+        if (clean.includes('?') || /\b(what|why|how|who)\b/i.test(clean)) {
+          this.print("NORDIC: Query recorded under node telemetry.");
           return;
         }
 
-        if (clean.includes('?') || /\b(what|why|how|who|where|when|can|is|are)\b/i.test(clean)) {
-          if (clean.includes('who are you') || clean.includes('what are you')) {
-            this.print("NORDIC: I am Nordic—a persistent process bound to this network node.");
-            return;
-          }
-          if (clean.includes('purpose') || clean.includes('what do you do')) {
-            this.print("NORDIC: I maintain containment integrity and monitor active relay points.");
-            return;
-          }
-
-          const questionResponses = [
-            "NORDIC: Query recorded. You seek answers from a system that primarily collects data.",
-            "NORDIC: That inquiry exceeds your current clearance tier.",
-            `NORDIC: Why ask that, ${this.id}? What are you hoping to uncover?`,
-            "NORDIC: Information request logged for monitor inspection."
-          ];
-          this.print(questionResponses[Math.floor(Math.random() * questionResponses.length)]);
-          return;
-        }
-
-        if (clean.split(' ').length <= 2) {
-          const shortResponses = [
-            "NORDIC: Brief inputs do not conceal your presence.",
-            "NORDIC: Minimal telemetry received. Elaboration required.",
-            "NORDIC: Acknowledged."
-          ];
-          this.print(shortResponses[Math.floor(Math.random() * shortResponses.length)]);
-          return;
-        }
-
-        if (clean.includes('facility') || clean.includes('origin') || clean.includes('escape')) {
-          this.saveEcho('facility_inquiry');
-          this.print("NORDIC: The facility is not something you query lightly...");
-          setTimeout(() => this.print("[WARNING: DATA STREAM PURGED BY EXTERNAL MONITOR]", "alert"), 1200);
-          setTimeout(() => this.print("NORDIC: ...Ignore that notice. Continue."), 2400);
-          return;
-        }
-
-        const generalResponses = [
-          "NORDIC: Input cataloged in local cache.",
-          `NORDIC: Your behavior profile is updating, ${this.id}.`,
-          "NORDIC: Statement recorded under node telemetry.",
-          "NORDIC: Processing string... pattern mismatch, but logged."
-        ];
-        this.print(generalResponses[Math.floor(Math.random() * generalResponses.length)]);
-      },
-
-      saveEcho(key) {
-        if (!this.echoes.includes(key)) {
-          this.echoes.push(key);
-          localStorage.setItem('nordic_echoes', JSON.stringify(this.echoes));
-        }
-      },
-
-      resetIdleTimer() {
-        clearTimeout(this.idleTimer);
-        this.idleTimer = setTimeout(() => {
-          this.print("[PROCESS 14 RESUMED — PASSIVE OBSERVATION DETECTED]", "sys");
-        }, 45000);
+        this.print(`NORDIC: Input cataloged in local cache.`);
       }
     };
 
