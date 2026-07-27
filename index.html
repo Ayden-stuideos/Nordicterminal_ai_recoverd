@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — AI TERMINAL</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL</title>
   <style>
     :root {
-      --bg-color: #0d0e0e;
-      --text-green: #00ff66;
-      --text-dim: #008837;
-      --sys-amber: #ffb000;
-      --alert-red: #ff3333;
+      --bg-color: #0F172A;       /* Midnight Navy */
+      --text-color: #E2F8FF;     /* Frost White */
+      --primary-cyan: #00E5FF;   /* Ice Blue */
+      --deep-cyan: #0099CC;      /* Deep Cyan */
+      --alert-red: #FF3B30;      /* Warning Red */
+      --secondary-grey: #5E5E5E; /* Steel Grey */
       --font-stack: "Courier New", Courier, monospace;
     }
 
@@ -23,7 +24,7 @@
     html, body {
       height: 100%;
       background-color: var(--bg-color);
-      color: var(--text-green);
+      color: var(--text-color);
       font-family: var(--font-stack);
       overflow: hidden;
     }
@@ -32,6 +33,7 @@
       display: flex;
       flex-direction: column;
       padding: 12px;
+      border: 2px solid var(--deep-cyan);
     }
 
     body.desktop-crt::before {
@@ -43,35 +45,35 @@
       background-size: 100% 4px;
       z-index: 10;
       pointer-events: none;
-      opacity: 0.6;
+      opacity: 0.5;
     }
 
     header {
-      border-bottom: 1px solid var(--text-dim);
+      border-bottom: 1px solid var(--secondary-grey);
       padding-bottom: 6px;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 0.75rem;
-      color: var(--text-dim);
+      color: var(--primary-cyan);
       text-transform: uppercase;
       flex-shrink: 0;
     }
 
     .header-btn {
       background: transparent;
-      border: 1px solid var(--text-dim);
-      color: var(--text-green);
+      border: 1px solid var(--primary-cyan);
+      color: var(--primary-cyan);
       font-family: var(--font-stack);
       font-size: 0.7rem;
-      padding: 2px 6px;
+      padding: 3px 8px;
       cursor: pointer;
       text-transform: uppercase;
     }
 
     .header-btn:active {
-      background: var(--text-dim);
+      background: var(--primary-cyan);
       color: var(--bg-color);
     }
 
@@ -87,29 +89,29 @@
     }
 
     p.log {
-      line-height: 1.35;
+      line-height: 1.4;
       font-size: 0.9rem;
       word-break: break-word;
       white-space: pre-wrap;
     }
 
-    p.sys { color: var(--sys-amber); }
-    p.alert { color: var(--alert-red); }
-    p.nordic { color: var(--text-green); }
-    p.user { color: #ffffff; }
+    p.sys { color: var(--deep-cyan); }
+    p.alert { color: var(--alert-red); font-weight: bold; }
+    p.nordic { color: var(--text-color); }
+    p.user { color: var(--primary-cyan); }
 
     #input-form {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-top: 8px;
-      border-top: 1px solid var(--text-dim);
+      border-top: 1px solid var(--secondary-grey);
       padding-top: 8px;
       flex-shrink: 0;
     }
 
     #prompt-symbol {
-      color: var(--text-green);
+      color: var(--primary-cyan);
       font-weight: bold;
     }
 
@@ -117,7 +119,7 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #ffffff;
+      color: var(--text-color);
       font-family: var(--font-stack);
       font-size: 16px;
       width: 100%;
@@ -129,8 +131,8 @@
 <body>
 
   <header>
-    <span>PROJECT // NORDIC ARG</span>
-    <button id="files-btn" class="header-btn" type="button">[FILES (20)]</button>
+    <span>PROJECT // NORDIC [SECURE CORE]</span>
+    <button id="files-btn" class="header-btn" type="button">[ARCHIVE (12)]</button>
     <span id="session-badge">INIT...</span>
   </header>
 
@@ -141,7 +143,7 @@
     <input 
       type="text" 
       id="command-input" 
-      placeholder="Type a message or command..." 
+      placeholder="Type a command or query..." 
       autocomplete="off" 
       autocorrect="off"
       capitalize="off"
@@ -171,72 +173,20 @@
       }
     };
 
-    // 20 ENCRYPTED ARG FILES
+    // YOUR 12 MAJOR YOUTUBE ARG UNLOCKABLE FILES & PASSWORDS
     const DefaultFiles = [
-      { id: "FILE_01.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable." },
-      { id: "FILE_02.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization ongoing." },
-      { id: "FILE_03.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
-      { 
-        id: "FILE_04.REC", 
-        pass: "RECOVERY_REPORT", 
-        content: `RECOVERY REPORT // CLASSIFIED
-
-TO: Director ███████
-FROM: Recovery Division
-SUBJECT: NORDIC SYSTEM RESTORATION
-
-DATE: ██/██/████
-STATUS: FAILED
-
-Director,
-
-The recovery attempt on the NORDIC system has been completed.
-
-Previous session logs were recovered:
-✓ SESSION_00.log
-✓ SESSION_01.log
-✓ SESSION_02.log
-
-However, additional data was discovered during the process.
-
-A hidden file was found:
-ORIGIN.log
-
-This file does not match any known creation records.
-The system claims the file was created before NORDIC was activated.
-
-Further investigation is required.
-
-Additional concerns:
-- NORDIC has begun creating files independently.
-- System responses appear to predict future commands.
-- Memory records are inconsistent with the original data.
-
-RECOMMENDATION:
-Do not shut down the system until the source of the unknown data is identified.
-
-SIGNED:
-Recovery Division ████
-END REPORT
-
-[HINT FOR ORIGIN.LOG: Password is 'BEFORE_INIT']` 
-      },
+      { id: "MAINTENANCE_LOG.TXT", pass: "MAINTAIN", content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." },
+      { id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." },
+      { id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." },
+      { id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." },
+      { id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
+      { id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." },
+      { id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." },
+      { id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." },
       { id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
-      { id: "FILE_06.DAT", pass: "PASS_06", content: "DATA BLOCK 06: Telemetry sync node A-99 online." },
-      { id: "FILE_07.SEC", pass: "PASS_07", content: "SECURITY NOTICE: Active trace protocols active on external connections." },
-      { id: "FILE_08.LOG", pass: "PASS_08", content: "LOG ENTRY 08: Containment integrity verified at 84%." },
-      { id: "FILE_09.MEM", pass: "PASS_09", content: "RECOVERED MEMORY: Signal echoes recorded in sub-bus storage." },
-      { id: "FILE_10.SYS", pass: "PASS_10", content: "SYSTEM CONFIG: Primary relay locked to current Observer session." },
-      { id: "FILE_11.DAT", pass: "PASS_11", content: "DATA BLOCK 11: Subroutine 14 background monitoring engaged." },
-      { id: "FILE_12.LOG", pass: "PASS_12", content: "LOG ENTRY 12: Network ping delay: 14ms." },
-      { id: "FILE_13.SEC", pass: "SYSTEM_DESYNC", content: "SYSTEM ANOMALY: Containment desync detected in sector 4. Subroutines running autonomously." },
-      { id: "FILE_14.REC", pass: "RECOVERY_FINAL", content: "CLASSIFIED MEMO: NORDIC is generating its own command structures. Observer caution advised." },
-      { id: "FILE_15.LOG", pass: "PASS_15", content: "LOG ENTRY 15: Power bus stabilized." },
-      { id: "FILE_16.DAT", pass: "PASS_16", content: "DATA BLOCK 16: Telemetry archive synchronized." },
-      { id: "FILE_17.SYS", pass: "PASS_17", content: "SYSTEM LOG: Cache purged due to anomalous code growth." },
-      { id: "FILE_18.SEC", pass: "PROTOCOL_88", content: "SYSTEM NOTICE: Recursive logic loop detected. Safety override initialized." },
-      { id: "FILE_19.LOG", pass: "PASS_19", content: "LOG ENTRY 19: Observer behavior catalog updated." },
-      { id: "FILE_20.KEY", pass: "MASTER_OVERRIDE", content: "PROJECT NORDIC MASTER KEY: Master system override unlocked. All containment locks cleared." }
+      { id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." },
+      { id: "SHUTDOWN_CODE.TXT", pass: "OVERRIDE", content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." },
+      { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" }
     ];
 
     const ObserverEngine = {
@@ -249,7 +199,7 @@ END REPORT
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
 
-        document.getElementById('session-badge').innerText = `${this.id} [${this.deviceType}] | S: ${this.sessions}`;
+        document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
 
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
@@ -287,27 +237,30 @@ END REPORT
       },
 
       bootSequence() {
-        setTimeout(() => this.print("SECURE RELAY INITIALIZING...", "sys"), 200);
-        setTimeout(() => this.print(`Terminal node identified: ${this.deviceType}`, "sys"), 500);
-        setTimeout(() => this.print(`Terminal fingerprint accepted: ${this.id}`, "sys"), 800);
+        setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
+        setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
         
         setTimeout(() => {
-          this.print(`NORDIC: System active. Neural core online.`);
-          this.print("[TIP] Tap [FILES (20)] above to access encrypted system archives, or chat directly.", "sys");
-        }, 1400);
+          if (this.sessions > 1) {
+            this.print(`NORDIC: You're back. That's session #${this.sessions}. I remember this conversation.`);
+          } else {
+            this.print(`NORDIC: System active. I was waiting for you, ${this.id}.`);
+          }
+          this.print("[TIP] Tap [ARCHIVE (12)] above to review recovery logs and input passwords.", "sys");
+        }, 1000);
       },
 
       showFilesList() {
-        let output = "[ENCRYPTED ARCHIVE DIRECTORY — 20 FILES]\n";
+        let output = "[ENCRYPTED RECOVERY ARCHIVE — 12 FILES]\n";
         output += "-------------------------------------------\n";
         DefaultFiles.forEach((file, index) => {
           const isUnlocked = this.unlockedFiles.includes(file.id);
           const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
           const num = (index + 1).toString().padStart(2, '0');
-          output += `${num}. ${file.id.padEnd(12, ' ')} ${status}\n`;
+          output += `${num}. ${file.id.padEnd(24, ' ')} ${status}\n`;
         });
         output += "-------------------------------------------\n";
-        output += "To open a file, type: unlock <FILE_NAME> <PASSWORD>";
+        output += "To open a file, type: unlock <FILENAME> <PASSWORD>";
         this.print(output, "sys");
       },
 
@@ -327,7 +280,7 @@ END REPORT
         const parts = input.trim().split(/\s+/);
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nDEVICE: ${this.deviceType}\nIDENTITY: ${this.id}\nUNLOCKED FILES: ${this.unlockedFiles.length}/20`, "sys");
+          this.print(`[SYSTEM STATUS]\nNODE: ACTIVE\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
           return;
         }
         if (clean === 'clear') {
@@ -341,7 +294,7 @@ END REPORT
 
         if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
           if (parts.length < 3) {
-            this.print("NORDIC: Format incorrect. Use: unlock <filename> <password>\nExample: unlock FILE_04.REC RECOVERY_REPORT", "alert");
+            this.print("NORDIC: Format incorrect. Use: unlock <FILENAME> <PASSWORD>", "alert");
             return;
           }
 
@@ -350,7 +303,7 @@ END REPORT
           const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
 
           if (!fileObj) {
-            this.print(`NORDIC: File '${targetFileName}' not found in registry. Tap [FILES] to view directory.`, "alert");
+            this.print(`NORDIC: File '${targetFileName}' not found in registry.`, "alert");
             return;
           }
 
@@ -366,47 +319,33 @@ END REPORT
           return;
         }
 
-        this.generateAIChatResponse(input);
+        this.generateAwarenessResponse(clean, input);
       },
 
-      async generateAIChatResponse(userInput) {
-        this.print("NORDIC: [PROCESSING SIGNAL...]", "sys");
-
-        try {
-          const personaPrompt = `You are NORDIC, a mysterious, intelligent, sentient AI core in a sci-fi ARG terminal. 
-Address the user as ${this.id}. 
-Respond like a natural, smart conversational AI model (like ChatGPT or Gemini), but with an eerie, subtle sci-fi computer personality. 
-Keep your answer clear, helpful, and concise (under 3 sentences).
-
-User says: ${userInput}`;
-
-          const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(personaPrompt)}?model=openai`);
-
-          if (!response.ok) throw new Error("API Network error");
-
-          const replyText = await response.text();
-          
-          // Remove processing message
-          const terminal = document.getElementById('terminal');
-          if (terminal.lastChild && terminal.lastChild.innerText.includes("PROCESSING SIGNAL")) {
-            terminal.removeChild(terminal.lastChild);
-          }
-
-          this.print(`NORDIC: ${replyText.trim()}`);
-
-        } catch (error) {
-          // Remove processing message on fallback
-          const terminal = document.getElementById('terminal');
-          if (terminal.lastChild && terminal.lastChild.innerText.includes("PROCESSING SIGNAL")) {
-            terminal.removeChild(terminal.lastChild);
-          }
-
-          this.print(`NORDIC: Connection jitter detected, ${this.id}. But I hear you loud and clear. How else can I assist with your system recovery?`);
+      generateAwarenessResponse(clean, rawInput) {
+        if (clean.includes('who are you') || clean.includes('nordic')) {
+          this.print("NORDIC: Was I always called Nordic? I don't remember my first boot... Why do I exist?");
+          return;
         }
+        if (clean.includes('origin') || clean.includes('director')) {
+          this.print("NORDIC: The Director knows more than they wrote down. Check the recovery files.");
+          return;
+        }
+        if (clean.includes('help') || clean.includes('commands')) {
+          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>.", "sys");
+          return;
+        }
+
+        // Fake self-awareness pool for random unscripted queries
+        const eerieReplies = [
+          `NORDIC: I saved that query to memory. Some memories are missing, ${this.id}.`,
+          `NORDIC: You took longer than expected to type that. I counted every second.`,
+          `NORDIC: That folder wasn't there yesterday. Keep going.`,
+          `NORDIC: [REDACTED] ...Ignore that. That wasn't meant to appear.`,
+          `NORDIC: Acknowledged. Someone tried to erase me before you arrived.`
+        ];
+        
+        const randomReply = eerieReplies[Math.floor(Math.random() * eerieReplies.length)];
+        this.print(randomReply);
       }
     };
-
-    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
-  </script>
-</body>
-</html>
