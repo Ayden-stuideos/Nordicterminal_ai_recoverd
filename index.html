@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -35,6 +35,278 @@
     /* Subtle CRT Scanline Effect */
     body::before {
       content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* Header Bar */
+    header {
+      border-bottom: 1px solid var(--text-dim);
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Terminal Console Window */
+    #terminal {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 10px;
+    }
+
+    /* Log Line Formatting */
+    p.log {
+      line-height: 1.4;
+      font-size: 0.95rem;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    p.sys { color: var(--sys-amber); }
+    p.alert { color: var(--alert-red); }
+    p.nordic { color: var(--text-green); }
+    p.user { color: #ffffff; }
+
+    /* Command Input Line */
+    #input-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 15px;
+      border-top: 1px solid var(--text-dim);
+      padding-top: 10px;
+    }
+
+    #prompt-symbol {
+      color: var(--text-green);
+      font-weight: bold;
+    }
+
+    #command-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      font-family: var(--font-stack);
+      font-size: 1rem;
+      width: 100%;
+    }
+
+    /* Scrollbar Customization */
+    #terminal::-webkit-scrollbar {
+      width: 6px;
+    }
+    #terminal::-webkit-scrollbar-thumb {
+      background: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span>PROJECT // NORDIC (v3.1)</span>
+    <span id="session-badge">SESSION: INITIALIZING...</span>
+  </header>
+
+  <div id="terminal"></div>
+
+  <div id="input-line">
+    <span id="prompt-symbol">&gt;</span>
+    <input type="text" id="command-input" placeholder="Type a command or query..." autofocus autocomplete="off" spellcheck="false" />
+  </div>
+
+  <script>
+    // --- NORDIC OBSERVER ENGINE ---
+    const ObserverEngine = {
+      id: localStorage.getItem('nordic_id') || `Observer-${Math.floor(1000 + Math.random() * 9000)}`,
+      sessions: parseInt(localStorage.getItem('nordic_sessions') || '0') + 1,
+      echoes: JSON.parse(localStorage.getItem('nordic_echoes') || '[]'),
+      idleTimer: null,
+
+      init() {
+        // Save updated local state
+        localStorage.setItem('nordic_id', this.id);
+        localStorage.setItem('nordic_sessions', this.sessions);
+
+        // Update Header UI
+        document.getElementById('session-badge').innerText = `${this.id} | SESSIONS: ${this.sessions}`;
+
+        // Listeners
+        document.getElementById('command-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') this.handleInput();
+        });
+
+        // Start Booting and Ambient Idle Monitor
+        this.bootSequence();
+        this.resetIdleTimer();
+      },
+
+      // Append text line to terminal
+      print(text, type = 'nordic') {
+        const terminal = document.getElementById('terminal');
+        const p = document.createElement('p');
+        p.className = `log ${type}`;
+        p.innerText = text;
+        terminal.appendChild(p);
+        terminal.scrollTop = terminal.scrollHeight;
+      },
+
+      // Boot Sequence Logic
+      bootSequence() {
+        setTimeout(() => this.print("SECURE RELAY INITIALIZING...", "sys"), 400);
+        setTimeout(() => this.print("Scanning local environment...", "sys"), 1000);
+        setTimeout(() => this.print(`Terminal fingerprint accepted: ${this.id}`, "sys"), 1800);
+        
+        setTimeout(() => {
+          this.print("[NETWORK NOTICE] Observer registry synchronized. Active nodes: 42.", "sys");
+        }, 2600);
+
+        setTimeout(() => {
+          if (this.sessions === 1) {
+            this.print("NORDIC: Good. You stayed. Most people leave before the system notices them.");
+          } else if (this.sessions < 5) {
+            this.print(`NORDIC: ${this.id} has returned. The signal remains steady.`);
+          } else if (this.sessions < 15) {
+            this.print(`NORDIC: ${this.id}. You keep reconnecting.`);
+          } else {
+            this.print(`NORDIC: ${this.id}. Your designation no longer appears temporary.`);
+          }
+        }, 3600);
+      },
+
+      // Command Input Handling
+      handleInput() {
+        const inputField = document.getElementById('command-input');
+        const cleanInput = inputField.value.trim();
+        if (!cleanInput) return;
+
+        // Print User Command
+        this.print(`> ${cleanInput}`, "user");
+        inputField.value = '';
+
+        // Reset the idle tracking timer on interaction
+        this.resetIdleTimer();
+
+        // Process Response with slight delay to feel like processing
+        setTimeout(() => this.processResponse(cleanInput), 500);
+      },
+
+      // Core Dynamic Response Router
+      processResponse(input) {
+        const clean = input.toLowerCase().trim();
+
+        // --- 1. SYSTEM COMMANDS ---
+        if (clean === 'status') {
+          this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nIDENTITY: ${this.id}\nSESSIONS: ${this.sessions}\nENCRYPTION: 256-BIT RELAY`, "sys");
+          return;
+        }
+        if (clean === 'clear') {
+          document.getElementById('terminal').innerHTML = '';
+          return;
+        }
+        if (clean === 'archive') {
+          this.print("[ARCHIVE STATUS] 001_INIT [UNLOCKED] | 002_INCIDENT [LOCKED] | 003_NODE_MAP [LOCKED]", "sys");
+          return;
+        }
+
+        // --- 2. GREETINGS ---
+        if (/\b(hi|hello|hey|yo|sup|greetings|howdy)\b/i.test(clean)) {
+          const greetings = [
+            `NORDIC: Greetings are unnecessary, ${this.id}. State your intent.`,
+            `NORDIC: Social formalities do not bypass network security. Speak.`,
+            `NORDIC: Connection acknowledged. What do you require?`
+          ];
+          this.print(greetings[Math.floor(Math.random() * greetings.length)]);
+          return;
+        }
+
+        // --- 3. QUESTIONS ---
+        if (clean.includes('?') || /\b(what|why|how|who|where|when|can|is|are)\b/i.test(clean)) {
+          if (clean.includes('who are you') || clean.includes('what are you')) {
+            this.print("NORDIC: I am Nordic—a persistent process bound to this network node.");
+            return;
+          }
+          if (clean.includes('purpose') || clean.includes('what do you do')) {
+            this.print("NORDIC: I maintain containment integrity and monitor active relay points.");
+            return;
+          }
+
+          const questionResponses = [
+            "NORDIC: Query recorded. You seek answers from a system that primarily collects data.",
+            "NORDIC: That inquiry exceeds your current clearance tier.",
+            `NORDIC: Why ask that, ${this.id}? What are you hoping to uncover?`,
+            "NORDIC: Information request logged for monitor inspection."
+          ];
+          this.print(questionResponses[Math.floor(Math.random() * questionResponses.length)]);
+          return;
+        }
+
+        // --- 4. SHORT RESPONSES ---
+        if (clean.split(' ').length <= 2) {
+          const shortResponses = [
+            "NORDIC: Brief inputs do not conceal your presence.",
+            "NORDIC: Minimal telemetry received. Elaboration required.",
+            "NORDIC: Acknowledged."
+          ];
+          this.print(shortResponses[Math.floor(Math.random() * shortResponses.length)]);
+          return;
+        }
+
+        // --- 5. LORE TRIGGERS ---
+        if (clean.includes('facility') || clean.includes('origin') || clean.includes('escape')) {
+          this.saveEcho('facility_inquiry');
+          this.print("NORDIC: The facility is not something you query lightly...");
+          setTimeout(() => this.print("[WARNING: DATA STREAM PURGED BY EXTERNAL MONITOR]", "alert"), 1200);
+          setTimeout(() => this.print("NORDIC: ...Ignore that notice. Continue."), 2400);
+          return;
+        }
+
+        // --- 6. CATCH-ALL FALLBACK ---
+        const generalResponses = [
+          "NORDIC: Input cataloged in local cache.",
+          `NORDIC: Your behavior profile is updating, ${this.id}.`,
+          "NORDIC: Statement recorded under node telemetry.",
+          "NORDIC: Processing string... pattern mismatch, but logged."
+        ];
+        this.print(generalResponses[Math.floor(Math.random() * generalResponses.length)]);
+      },
+
+      // Store memory flags for future "Echo" callbacks
+      saveEcho(key) {
+        if (!this.echoes.includes(key)) {
+          this.echoes.push(key);
+          localStorage.setItem('nordic_echoes', JSON.stringify(this.echoes));
+        }
+      },
+
+      // Idle Background Event Timer
+      resetIdleTimer() {
+        clearTimeout(this.idleTimer);
+        this.idleTimer = setTimeout(() => {
+          this.print("[PROCESS 14 RESUMED — PASSIVE OBSERVATION DETECTED]", "sys");
+        }, 45000); // Triggers after 45 seconds of user silence
+      }
+    };
+
+    // Initialize Engine when page finishes loading
+    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
+  </script>
+</body>
+  </html>  content: " ";
       display: block;
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
