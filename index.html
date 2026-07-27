@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>PROJECT // NORDIC — TERMINAL</title>
   <style>
     /* --- RETRO CRT DISPLAY STYLES --- */
@@ -25,11 +25,13 @@
       background-color: var(--bg-color);
       color: var(--text-green);
       font-family: var(--font-stack);
+      /* Uses dynamic viewport height so mobile address bars don't cut off content */
       height: 100vh;
+      height: 100dvh; 
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      padding: 20px;
+      padding: 15px;
     }
 
     /* Subtle CRT Scanline Effect */
@@ -48,14 +50,15 @@
     /* Header Bar */
     header {
       border-bottom: 1px solid var(--text-dim);
-      padding-bottom: 10px;
-      margin-bottom: 15px;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 1px;
+      flex-shrink: 0;
     }
 
     /* Terminal Console Window */
@@ -65,13 +68,14 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      padding-right: 10px;
+      padding-right: 5px;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
 
     /* Log Line Formatting */
     p.log {
       line-height: 1.4;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       word-break: break-word;
       white-space: pre-wrap;
     }
@@ -86,9 +90,11 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-top: 15px;
+      margin-top: 10px;
       border-top: 1px solid var(--text-dim);
       padding-top: 10px;
+      flex-shrink: 0;
+      cursor: text;
     }
 
     #prompt-symbol {
@@ -102,13 +108,14 @@
       outline: none;
       color: #ffffff;
       font-family: var(--font-stack);
-      font-size: 1rem;
+      /* Font size set to 16px to prevent iOS auto-zoom on input focus */
+      font-size: 16px; 
       width: 100%;
     }
 
     /* Scrollbar Customization */
     #terminal::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
     }
     #terminal::-webkit-scrollbar-thumb {
       background: var(--text-dim);
@@ -118,15 +125,24 @@
 <body>
 
   <header>
-    <span>PROJECT // NORDIC (v3.1)</span>
-    <span id="session-badge">SESSION: INITIALIZING...</span>
+    <span>PROJECT // NORDIC</span>
+    <span id="session-badge">INIT...</span>
   </header>
 
   <div id="terminal"></div>
 
   <div id="input-line">
     <span id="prompt-symbol">&gt;</span>
-    <input type="text" id="command-input" placeholder="Type a command or query..." autofocus autocomplete="off" spellcheck="false" />
+    <input 
+      type="text" 
+      id="command-input" 
+      placeholder="Type a command..." 
+      autofocus 
+      autocomplete="off" 
+      autocorrect="off"
+      capitalize="off"
+      spellcheck="false" 
+    />
   </div>
 
   <script>
@@ -138,24 +154,27 @@
       idleTimer: null,
 
       init() {
-        // Save updated local state
         localStorage.setItem('nordic_id', this.id);
         localStorage.setItem('nordic_sessions', this.sessions);
 
-        // Update Header UI
-        document.getElementById('session-badge').innerText = `${this.id} | SESSIONS: ${this.sessions}`;
+        document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
 
-        // Listeners
-        document.getElementById('command-input').addEventListener('keydown', (e) => {
+        const inputField = document.getElementById('command-input');
+
+        // Handle Enter key submit
+        inputField.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') this.handleInput();
         });
 
-        // Start Booting and Ambient Idle Monitor
+        // Tap anywhere on screen to focus the text box on mobile
+        document.body.addEventListener('click', () => {
+          inputField.focus();
+        });
+
         this.bootSequence();
         this.resetIdleTimer();
       },
 
-      // Append text line to terminal
       print(text, type = 'nordic') {
         const terminal = document.getElementById('terminal');
         const p = document.createElement('p');
@@ -165,7 +184,6 @@
         terminal.scrollTop = terminal.scrollHeight;
       },
 
-      // Boot Sequence Logic
       bootSequence() {
         setTimeout(() => this.print("SECURE RELAY INITIALIZING...", "sys"), 400);
         setTimeout(() => this.print("Scanning local environment...", "sys"), 1000);
@@ -188,28 +206,21 @@
         }, 3600);
       },
 
-      // Command Input Handling
       handleInput() {
         const inputField = document.getElementById('command-input');
         const cleanInput = inputField.value.trim();
         if (!cleanInput) return;
 
-        // Print User Command
         this.print(`> ${cleanInput}`, "user");
         inputField.value = '';
 
-        // Reset the idle tracking timer on interaction
         this.resetIdleTimer();
-
-        // Process Response with slight delay to feel like processing
         setTimeout(() => this.processResponse(cleanInput), 500);
       },
 
-      // Core Dynamic Response Router
       processResponse(input) {
         const clean = input.toLowerCase().trim();
 
-        // --- 1. SYSTEM COMMANDS ---
         if (clean === 'status') {
           this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nIDENTITY: ${this.id}\nSESSIONS: ${this.sessions}\nENCRYPTION: 256-BIT RELAY`, "sys");
           return;
@@ -223,7 +234,6 @@
           return;
         }
 
-        // --- 2. GREETINGS ---
         if (/\b(hi|hello|hey|yo|sup|greetings|howdy)\b/i.test(clean)) {
           const greetings = [
             `NORDIC: Greetings are unnecessary, ${this.id}. State your intent.`,
@@ -234,7 +244,6 @@
           return;
         }
 
-        // --- 3. QUESTIONS ---
         if (clean.includes('?') || /\b(what|why|how|who|where|when|can|is|are)\b/i.test(clean)) {
           if (clean.includes('who are you') || clean.includes('what are you')) {
             this.print("NORDIC: I am Nordic—a persistent process bound to this network node.");
@@ -255,7 +264,6 @@
           return;
         }
 
-        // --- 4. SHORT RESPONSES ---
         if (clean.split(' ').length <= 2) {
           const shortResponses = [
             "NORDIC: Brief inputs do not conceal your presence.",
@@ -266,7 +274,6 @@
           return;
         }
 
-        // --- 5. LORE TRIGGERS ---
         if (clean.includes('facility') || clean.includes('origin') || clean.includes('escape')) {
           this.saveEcho('facility_inquiry');
           this.print("NORDIC: The facility is not something you query lightly...");
@@ -275,7 +282,6 @@
           return;
         }
 
-        // --- 6. CATCH-ALL FALLBACK ---
         const generalResponses = [
           "NORDIC: Input cataloged in local cache.",
           `NORDIC: Your behavior profile is updating, ${this.id}.`,
@@ -285,7 +291,6 @@
         this.print(generalResponses[Math.floor(Math.random() * generalResponses.length)]);
       },
 
-      // Store memory flags for future "Echo" callbacks
       saveEcho(key) {
         if (!this.echoes.includes(key)) {
           this.echoes.push(key);
@@ -293,16 +298,14 @@
         }
       },
 
-      // Idle Background Event Timer
       resetIdleTimer() {
         clearTimeout(this.idleTimer);
         this.idleTimer = setTimeout(() => {
           this.print("[PROCESS 14 RESUMED — PASSIVE OBSERVATION DETECTED]", "sys");
-        }, 45000); // Triggers after 45 seconds of user silence
+        }, 45000);
       }
     };
 
-    // Initialize Engine when page finishes loading
     window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
   </script>
 </body>
