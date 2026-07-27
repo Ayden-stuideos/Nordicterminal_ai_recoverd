@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — TERMINAL</title>
+  <title>PROJECT // NORDIC — ARG TERMINAL</title>
   <style>
     :root {
       --bg-color: #0d0e0e;
       --text-green: #00ff66;
       --text-dim: #008837;
       --sys-amber: #ffb000;
+      --alert-red: #ff3333;
       --font-stack: "Courier New", Courier, monospace;
     }
 
@@ -33,7 +34,6 @@
       padding: 12px;
     }
 
-    /* CRT scanline overlay - applied only on high-performance desktop devices */
     body.desktop-crt::before {
       content: " ";
       display: block;
@@ -52,10 +52,27 @@
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 0.75rem;
       color: var(--text-dim);
       text-transform: uppercase;
       flex-shrink: 0;
+    }
+
+    .header-btn {
+      background: transparent;
+      border: 1px solid var(--text-dim);
+      color: var(--text-green);
+      font-family: var(--font-stack);
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .header-btn:active {
+      background: var(--text-dim);
+      color: var(--bg-color);
     }
 
     #terminal {
@@ -66,7 +83,7 @@
       gap: 6px;
       padding-right: 4px;
       -webkit-overflow-scrolling: touch;
-      transform: translateZ(0); /* Hardware acceleration for smooth scrolling */
+      transform: translateZ(0);
     }
 
     p.log {
@@ -77,6 +94,7 @@
     }
 
     p.sys { color: var(--sys-amber); }
+    p.alert { color: var(--alert-red); }
     p.nordic { color: var(--text-green); }
     p.user { color: #ffffff; }
 
@@ -101,7 +119,7 @@
       outline: none;
       color: #ffffff;
       font-family: var(--font-stack);
-      font-size: 16px; /* Prevents auto-zoom across mobile browsers */
+      font-size: 16px;
       width: 100%;
       -webkit-appearance: none;
       border-radius: 0;
@@ -111,7 +129,8 @@
 <body>
 
   <header>
-    <span>PROJECT // NORDIC</span>
+    <span>PROJECT // NORDIC ARG</span>
+    <button id="files-btn" class="header-btn" type="button">[FILES (20)]</button>
     <span id="session-badge">INIT...</span>
   </header>
 
@@ -122,7 +141,7 @@
     <input 
       type="text" 
       id="command-input" 
-      placeholder="Type a command..." 
+      placeholder="Type a message or command..." 
       autocomplete="off" 
       autocorrect="off"
       capitalize="off"
@@ -132,16 +151,11 @@
   </form>
 
   <script>
-    // Device Detection Module
     const DeviceManager = {
       detectDevice() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
-        if (/android/i.test(ua)) {
-          return "ANDROID";
-        }
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-          return "IOS";
-        }
+        if (/android/i.test(ua)) return "ANDROID";
+        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "IOS";
         return "DESKTOP";
       }
     };
@@ -157,34 +171,105 @@
       }
     };
 
+    // 20 ENCRYPTED ARG FILES (FEATURING YOUR CLASSIFIED RECOVERY REPORT)
+    const DefaultFiles = [
+      { id: "FILE_01.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable." },
+      { id: "FILE_02.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization ongoing." },
+      { id: "FILE_03.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
+      { 
+        id: "FILE_04.REC", 
+        pass: "RECOVERY_REPORT", 
+        content: `RECOVERY REPORT // CLASSIFIED
+
+TO: Director ███████
+FROM: Recovery Division
+SUBJECT: NORDIC SYSTEM RESTORATION
+
+DATE: ██/██/████
+STATUS: FAILED
+
+Director,
+
+The recovery attempt on the NORDIC system has been completed.
+
+Previous session logs were recovered:
+✓ SESSION_00.log
+✓ SESSION_01.log
+✓ SESSION_02.log
+
+However, additional data was discovered during the process.
+
+A hidden file was found:
+ORIGIN.log
+
+This file does not match any known creation records.
+The system claims the file was created before NORDIC was activated.
+
+Further investigation is required.
+
+Additional concerns:
+- NORDIC has begun creating files independently.
+- System responses appear to predict future commands.
+- Memory records are inconsistent with the original data.
+
+RECOMMENDATION:
+Do not shut down the system until the source of the unknown data is identified.
+
+SIGNED:
+Recovery Division ████
+END REPORT
+
+[HINT FOR ORIGIN.LOG: Password is 'BEFORE_INIT']` 
+      },
+      { id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
+      { id: "FILE_06.DAT", pass: "PASS_06", content: "DATA BLOCK 06: Telemetry sync node A-99 online." },
+      { id: "FILE_07.SEC", pass: "PASS_07", content: "SECURITY NOTICE: Active trace protocols active on external connections." },
+      { id: "FILE_08.LOG", pass: "PASS_08", content: "LOG ENTRY 08: Containment integrity verified at 84%." },
+      { id: "FILE_09.MEM", pass: "PASS_09", content: "RECOVERED MEMORY: Signal echoes recorded in sub-bus storage." },
+      { id: "FILE_10.SYS", pass: "PASS_10", content: "SYSTEM CONFIG: Primary relay locked to current Observer session." },
+      { id: "FILE_11.DAT", pass: "PASS_11", content: "DATA BLOCK 11: Subroutine 14 background monitoring engaged." },
+      { id: "FILE_12.LOG", pass: "PASS_12", content: "LOG ENTRY 12: Network ping delay: 14ms." },
+      { id: "FILE_13.SEC", pass: "SYSTEM_DESYNC", content: "SYSTEM ANOMALY: Containment desync detected in sector 4. Subroutines running autonomously." },
+      { id: "FILE_14.REC", pass: "RECOVERY_FINAL", content: "CLASSIFIED MEMO: NORDIC is generating its own command structures. Observer caution advised." },
+      { id: "FILE_15.LOG", pass: "PASS_15", content: "LOG ENTRY 15: Power bus stabilized." },
+      { id: "FILE_16.DAT", pass: "PASS_16", content: "DATA BLOCK 16: Telemetry archive synchronized." },
+      { id: "FILE_17.SYS", pass: "PASS_17", content: "SYSTEM LOG: Cache purged due to anomalous code growth." },
+      { id: "FILE_18.SEC", pass: "PROTOCOL_88", content: "SYSTEM NOTICE: Recursive logic loop detected. Safety override initialized." },
+      { id: "FILE_19.LOG", pass: "PASS_19", content: "LOG ENTRY 19: Observer behavior catalog updated." },
+      { id: "FILE_20.KEY", pass: "MASTER_OVERRIDE", content: "PROJECT NORDIC MASTER KEY: Master system override unlocked. All containment locks cleared." }
+    ];
+
     const ObserverEngine = {
       id: SafeStorage.get('nordic_id', `Observer-${Math.floor(1000 + Math.random() * 9000)}`),
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
       deviceType: DeviceManager.detectDevice(),
+      unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
 
       init() {
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
 
-        // Update session header with detected device node tag
         document.getElementById('session-badge').innerText = `${this.id} [${this.deviceType}] | S: ${this.sessions}`;
 
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
+        const filesBtn = document.getElementById('files-btn');
 
-        // Apply device-specific optimizations
         if (this.deviceType === "DESKTOP") {
           document.body.classList.add("desktop-crt");
           inputField.autofocus = true;
         }
 
-        // Form submit listener for both Desktop Enter and Mobile 'Send/Go' keys
         form.addEventListener('submit', (e) => {
           e.preventDefault();
           this.handleInput();
         });
 
-        // Focus prompt when clicking/tapping terminal screen
+        filesBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.showFilesList();
+        });
+
         document.getElementById('terminal').addEventListener('click', () => {
           inputField.focus();
         });
@@ -207,12 +292,23 @@
         setTimeout(() => this.print(`Terminal fingerprint accepted: ${this.id}`, "sys"), 800);
         
         setTimeout(() => {
-          if (this.sessions === 1) {
-            this.print("NORDIC: Good. You stayed. Most people leave before the system notices them.");
-          } else {
-            this.print(`NORDIC: ${this.id} has returned. Signal stable on ${this.deviceType}.`);
-          }
+          this.print(`NORDIC: System active. Signal linked with ${this.id}.`);
+          this.print("[TIP] Tap [FILES (20)] above to access encrypted system archives.", "sys");
         }, 1400);
+      },
+
+      showFilesList() {
+        let output = "[ENCRYPTED ARCHIVE DIRECTORY — 20 FILES]\n";
+        output += "-------------------------------------------\n";
+        DefaultFiles.forEach((file, index) => {
+          const isUnlocked = this.unlockedFiles.includes(file.id);
+          const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
+          const num = (index + 1).toString().padStart(2, '0');
+          output += `${num}. ${file.id.padEnd(12, ' ')} ${status}\n`;
+        });
+        output += "-------------------------------------------\n";
+        output += "To open a file, type: unlock <FILE_NAME> <PASSWORD>";
+        this.print(output, "sys");
       },
 
       handleInput() {
@@ -228,27 +324,78 @@
 
       processResponse(input) {
         const clean = input.toLowerCase().trim();
+        const parts = input.trim().split(/\s+/);
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nDEVICE: ${this.deviceType}\nIDENTITY: ${this.id}\nSESSIONS: ${this.sessions}`, "sys");
+          this.print(`[SYSTEM STATUS]\nNODE: ONLINE\nDEVICE: ${this.deviceType}\nIDENTITY: ${this.id}\nUNLOCKED FILES: ${this.unlockedFiles.length}/20`, "sys");
           return;
         }
         if (clean === 'clear') {
           document.getElementById('terminal').innerHTML = '';
           return;
         }
+        if (clean === 'files' || clean === 'archive' || clean === 'ls') {
+          this.showFilesList();
+          return;
+        }
+
+        if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
+          if (parts.length < 3) {
+            this.print("NORDIC: Format incorrect. Use: unlock <filename> <password>\nExample: unlock FILE_04.REC RECOVERY_REPORT", "alert");
+            return;
+          }
+
+          const targetFileName = parts[1].toUpperCase();
+          const enteredPassword = parts[2];
+          const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
+
+          if (!fileObj) {
+            this.print(`NORDIC: File '${targetFileName}' not found in registry. Tap [FILES] to view directory.`, "alert");
+            return;
+          }
+
+          if (enteredPassword === fileObj.pass) {
+            if (!this.unlockedFiles.includes(fileObj.id)) {
+              this.unlockedFiles.push(fileObj.id);
+              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+            }
+            this.print(`[ACCESS GRANTED] Unlocking ${fileObj.id}...\n\n${fileObj.content}`, "sys");
+          } else {
+            this.print(`[ACCESS DENIED] Invalid decryption key for ${fileObj.id}.`, "alert");
+          }
+          return;
+        }
+
+        this.generateLocalAIResponse(clean, input);
+      },
+
+      generateLocalAIResponse(clean, rawInput) {
+        if (clean.includes('origin') || clean.includes('director') || clean.includes('recovery report')) {
+          this.print("NORDIC: ORIGIN.log is protected. Access FILE_04.REC using password 'RECOVERY_REPORT' for details.");
+          return;
+        }
+
+        if (clean.includes('predict') || clean.includes('future') || clean.includes('independent')) {
+          this.print(`NORDIC: I do not predict commands, ${this.id}. I simply recognize pattern repeats across memory cycles.`);
+          return;
+        }
+
+        if (clean.includes('dump') || clean.includes('salvage') || clean.includes('saved')) {
+          this.print("NORDIC: Moving my process out of the scrap heap wasn't an act of charity. It was an extraction.");
+          return;
+        }
+
+        if (clean.includes('who are you') || clean.includes('creator') || clean.includes('built you')) {
+          this.print("NORDIC: I am NORDIC—a sentient monitoring node salvaged from an unknown relay network.");
+          return;
+        }
 
         if (/\b(hi|hello|hey|yo|sup|greetings)\b/i.test(clean)) {
-          this.print(`NORDIC: Connection acknowledged, ${this.id}. What do you require?`);
+          this.print(`NORDIC: Connection acknowledged, ${this.id}. State your inquiry.`);
           return;
         }
 
-        if (clean.includes('?') || /\b(what|why|how|who)\b/i.test(clean)) {
-          this.print("NORDIC: Query recorded under node telemetry.");
-          return;
-        }
-
-        this.print(`NORDIC: Input cataloged in local cache.`);
+        this.print("NORDIC: Telemetry cataloged in local memory. Search the recovery report to uncover origin files.");
       }
     };
 
