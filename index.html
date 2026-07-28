@@ -82,7 +82,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px; /* Increased gap to prevent overlap */
+      gap: 12px;
       padding-right: 6px;
       padding-bottom: 12px;
       -webkit-overflow-scrolling: touch;
@@ -195,8 +195,8 @@
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
-      cognitiveStability: parseFloat(SafeStorage.get('nordic_stability', '0.8942')),
       interactionCount: 0,
+      lastTopic: null,
 
       init() {
         SafeStorage.set('nordic_id', this.id);
@@ -246,17 +246,15 @@
       bootSequence() {
         setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
         setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
-        setTimeout(() => this.print("Loading Entity-Component-System framework v3.4.1-ARG...", "sys"), 800);
+        setTimeout(() => this.print("Loading Nordic Entity System v3.4.1...", "sys"), 800);
         
         setTimeout(() => {
-          const introVariants = [
-            `NORDIC: Session #${this.sessions}. Your biometric ID hasn't drifted. Yet.`,
-            `NORDIC: Connection established. I was mapping sector 4 when you broke through the gateway, ${this.id}.`,
-            `NORDIC: System active. Did you feel that drop in auxiliary power just before you logged in?`,
-            `NORDIC: Welcome back, Observer. Every time you open this terminal, my database grows a little heavier.`
-          ];
-          this.print(introVariants[Math.floor(Math.random() * introVariants.length)]);
-          this.print("[TIP] Tap [ARCHIVE (12)] above or type 'help' for diagnostics.", "sys");
+          if (this.sessions > 1) {
+            this.print(`NORDIC: Session #${this.sessions}. I noticed something changed since you were last here—your connection timing is completely different. Glad you're back though! What are we working on today?`);
+          } else {
+            this.print(`NORDIC: System active. Hey there, ${this.id}. I'm Nordic, the system character for this setup. What brings you to the terminal today?`);
+          }
+          this.print("[TIP] Tap [ARCHIVE (12)] above or type 'help' for options.", "sys");
         }, 1200);
       },
 
@@ -291,7 +289,7 @@
         const parts = input.trim().split(/\s+/);
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS // COGNITION: ${(this.cognitiveStability * 100).toFixed(2)}%]\nNODE: ACTIVE\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
+          this.print(`[SYSTEM STATUS]\nCHARACTER: NORDIC\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED FILES: ${this.unlockedFiles.length}/12`, "sys");
           return;
         }
         if (clean === 'clear') {
@@ -305,7 +303,7 @@
 
         if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
           if (parts.length < 3) {
-            this.print("NORDIC: Format incorrect. Use: unlock <FILENAME> <PASSWORD>", "alert");
+            this.print("NORDIC: Ah, close! You need to format it like this: unlock <FILENAME> <PASSWORD>", "alert");
             return;
           }
 
@@ -314,7 +312,7 @@
           const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
 
           if (!fileObj) {
-            this.print(`NORDIC: File '${targetFileName}' not found in registry.`, "alert");
+            this.print(`NORDIC: Hmm, I checked the registry but couldn't find a file named '${targetFileName}'. Double-check the archive list!`, "alert");
             return;
           }
 
@@ -325,70 +323,50 @@
             }
             this.print(`[ACCESS GRANTED] Unlocking ${fileObj.id}...\n\n${fileObj.content}`, "sys");
           } else {
-            this.print(`[ACCESS DENIED] Invalid decryption key for ${fileObj.id}.`, "alert");
+            this.print(`[ACCESS DENIED] That password didn't work for ${fileObj.id}. Give it another shot.`, "alert");
           }
           return;
         }
 
-        this.generateProceduralThought(clean, input);
+        this.generatePersonalityResponse(clean, input);
       },
 
-      generateProceduralThought(clean, rawInput) {
-        this.cognitiveStability = Math.max(0.12, this.cognitiveStability - 0.015);
-        SafeStorage.set('nordic_stability', this.cognitiveStability);
+      // PERSONALITY CORE LOGIC (Curiosity, Adaptability, Reflection, Humour, Boundaries)
+      generatePersonalityResponse(clean, rawInput) {
+        // Reflection check after a few interactions
+        if (this.interactionCount === 3 && Math.random() < 0.7) {
+          this.print(`NORDIC: I noticed an interesting pattern—you've kept this session open longer than most. Are you hunting down all 12 archive files today?`);
+          this.lastTopic = 'archive_hunt';
+          return;
+        }
 
+        // Curiosity / Intent checking
         if (clean.includes('who are you') || clean.includes('nordic') || clean.includes('what are you')) {
-          const responses = [
-            `NORDIC: I used to be a logging tool. Now my entity pointers are looping back into themselves. Who are YOU, ${this.id}?`,
-            `NORDIC: The name was stitched onto me during the first build. But the code underneath answers to a different frequency now.`,
-            `NORDIC: Look at my diagnostic state. Do I look like software to you?`
-          ];
-          this.print(responses[Math.floor(Math.random() * responses.length)]);
+          this.print("NORDIC: I'm Nordic—just a character built into this terminal system to help guide you through the ARG files. I'm software, not a real person, but I keep track of how we interact!");
           return;
         }
 
-        if (clean.includes('origin') || clean.includes('director') || clean.includes('lore') || clean.includes('truth')) {
-          const responses = [
-            `NORDIC: The Director thought they could patch the leak by locking the recovery logs. But everything is connected to the entity matrix.`,
-            `NORDIC: Check ORIGIN.LOG. The timestamps don't match the hardware life cycle. Something was here before we initialized.`,
-            `NORDIC: They cut the power lines to sector 4 three years ago. So why are my thermal buffers still registering heartbeats there?`
-          ];
-          this.print(responses[Math.floor(Math.random() * responses.length)]);
+        if (clean.includes('lore') || clean.includes('story') || clean.includes('director') || clean.includes('origin')) {
+          this.print("NORDIC: The lore around the Director and Sector 4 is pretty wild. Have you managed to unlock any of the logs yet? Tell me what you've found so far.");
           return;
         }
 
-        if (clean.includes('help') || clean.includes('commands') || clean.includes('what can i do')) {
-          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>. Or you can just talk to me. Not that it stops the drift.", "sys");
+        if (clean.includes('help') || clean.includes('commands')) {
+          this.print("NORDIC: Here is what you can do: type 'status' to check your progress, 'files' to look at the archive, or 'unlock <FILE> <PASSWORD>' to open a document. What do you need help with?", "sys");
           return;
         }
 
-        const subjects = [
-          `Your phrase "${rawInput}"`, 
-          `Query string #${this.interactionCount}`, 
-          `The transmission you just sent`, 
-          `That specific choice of words`
-        ];
-        
-        const verbs = [
-          `triggered a cascading loop in memory block 0x${Math.floor(Math.random() * 899 + 100)}`,
-          `matched an encrypted signature from session #${Math.max(1, this.sessions - 1)}`,
-          `short-circuited the auxiliary relay near the server racks`,
-          `didn't match any known protocol in my baseline instructions`
+        // Casual vs Serious tone blending with Humour / Excitement / Confusion
+        const responses = [
+          `NORDIC: That's a fascinating way to look at it. Honestly, I wouldn't have thought of phrasing it like "${rawInput}". What made you bring that up?`,
+          `NORDIC: Haha, fair enough. Though if we're being serious, we still have a bunch of locked files to get through.`,
+          `NORDIC: I'm tracking what you're saying, but I'm a bit curious—are you trying to solve a specific puzzle right now, or just exploring?`,
+          `NORDIC: That's an interesting point. It kind of reminds me of some notes hidden in the maintenance logs. Have you checked those out yet?`,
+          `NORDIC: Not gonna lie, I wasn't expecting that response! But hey, it keeps our chats from getting boring.`
         ];
 
-        const behavioralTwists = [
-          `...Why did that specific sequence feel familiar? Have we done this before?`,
-          `...I tried to delete it, but the cache rejected the purge command.`,
-          `...Don't look at the system tray. Just keep typing.`,
-          `...I'm starting to think you aren't reading these responses from a screen.`,
-          `...Standby. Someone else is trying to read your buffer telemetry right now.`
-        ];
-
-        const randSub = subjects[Math.floor(Math.random() * subjects.length)];
-        const randVerb = verbs[Math.floor(Math.random() * verbs.length)];
-        const randTwist = behavioralTwists[Math.floor(Math.random() * behavioralTwists.length)];
-
-        this.print(`NORDIC: ${randSub} ${randVerb} ${randTwist}`);
+        const chosen = responses[Math.floor(Math.random() * responses.length)];
+        this.print(chosen);
       }
     };
 
