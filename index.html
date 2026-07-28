@@ -15,11 +15,7 @@
       --font-stack: "Courier New", Courier, monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       height: 100%;
@@ -55,10 +51,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--primary-cyan);
       text-transform: uppercase;
       flex-shrink: 0;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .header-btn {
@@ -72,10 +70,12 @@
       text-transform: uppercase;
     }
 
-    .header-btn:active {
+    .header-btn.active {
       background: var(--primary-cyan);
       color: var(--bg-color);
     }
+
+    .header-btn:active { background: var(--primary-cyan); color: var(--bg-color); }
 
     #terminal {
       flex: 1;
@@ -88,18 +88,12 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    p.log {
-      line-height: 1.4;
-      font-size: 0.9rem;
-      word-break: break-word;
-      white-space: pre-wrap;
-      display: block;
-    }
-
+    p.log { line-height: 1.4; font-size: 0.9rem; word-break: break-word; white-space: pre-wrap; display: block; }
     p.sys { color: var(--deep-cyan); }
     p.alert { color: var(--alert-red); font-weight: bold; }
     p.nordic { color: var(--text-color); }
     p.user { color: var(--primary-cyan); }
+    p.vision { color: #B388FF; font-style: italic; }
 
     #input-form {
       display: flex;
@@ -111,11 +105,7 @@
       flex-shrink: 0;
     }
 
-    #prompt-symbol {
-      color: var(--primary-cyan);
-      font-weight: bold;
-      cursor: pointer;
-    }
+    #prompt-symbol { color: var(--primary-cyan); font-weight: bold; cursor: pointer; }
 
     #command-input {
       background: transparent;
@@ -129,7 +119,6 @@
       border-radius: 0;
     }
 
-    /* Consent & Media Overlay Screen */
     #consent-overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -151,19 +140,8 @@
       background: rgba(0, 229, 255, 0.03);
     }
 
-    .consent-box h2 {
-      color: var(--primary-cyan);
-      font-size: 1rem;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-    }
-
-    .consent-box p {
-      font-size: 0.85rem;
-      line-height: 1.5;
-      margin-bottom: 16px;
-      color: var(--text-color);
-    }
+    .consent-box h2 { color: var(--primary-cyan); font-size: 1rem; margin-bottom: 12px; text-transform: uppercase; }
+    .consent-box p { font-size: 0.85rem; line-height: 1.5; margin-bottom: 16px; color: var(--text-color); }
 
     .consent-btn {
       background: var(--primary-cyan);
@@ -178,9 +156,7 @@
       width: 100%;
     }
 
-    .consent-btn:hover {
-      background: var(--text-color);
-    }
+    .consent-btn:hover { background: var(--text-color); }
 
     #media-preview-container {
       margin-top: 10px;
@@ -190,13 +166,7 @@
       gap: 5px;
     }
 
-    video {
-      width: 120px;
-      height: 90px;
-      border: 1px solid var(--primary-cyan);
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
+    video { width: 120px; height: 90px; border: 1px solid var(--primary-cyan); object-fit: cover; transform: scaleX(-1); }
   </style>
 </head>
 <body>
@@ -204,7 +174,7 @@
   <div id="consent-overlay">
     <div class="consent-box">
       <h2>PROJECT // NORDIC PERMISSIONS</h2>
-      <p>This terminal requires hardware telemetry access (Camera & Microphone feeds) for behavioral analysis sync. Click below to review protocol, initialize media, and enter the session.</p>
+      <p>This terminal can optionally use your camera and microphone so NORDIC can react to what it sees and hears. Nothing is recorded or sent anywhere unless you turn WATCH or LISTEN on, and you can disable either at any time. Click below to continue.</p>
       <button id="agree-btn" class="consent-btn" type="button">[INITIALIZE & ACCEPT PROTOCOL]</button>
       <div id="media-preview-container">
         <video id="webcam" autoplay playsinline muted></video>
@@ -215,6 +185,8 @@
 
   <header>
     <span>PROJECT // NORDIC [SECURE CORE]</span>
+    <button id="watch-btn" class="header-btn" type="button">[WATCH: OFF]</button>
+    <button id="listen-btn" class="header-btn" type="button">[LISTEN: OFF]</button>
     <button id="files-btn" class="header-btn" type="button">[ARCHIVE (12)]</button>
     <span id="session-badge">INIT...</span>
   </header>
@@ -223,17 +195,19 @@
 
   <form id="input-form">
     <span id="prompt-symbol">&gt;</span>
-    <input 
-      type="text" 
-      id="command-input" 
-      placeholder="Type a command or query..." 
-      autocomplete="off" 
+    <input
+      type="text"
+      id="command-input"
+      placeholder="Type a command or query..."
+      autocomplete="off"
       autocorrect="off"
       autocapitalize="off"
-      spellcheck="false" 
+      spellcheck="false"
       enterkeyhint="send"
     />
   </form>
+
+  <canvas id="capture-canvas" style="display:none;"></canvas>
 
   <script>
     const DeviceManager = {
@@ -271,6 +245,16 @@
       { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" }
     ];
 
+    // ------------------------------------------------------------------
+    // CUSTOM_SEQUENCE: drop your own scripted story beats/lines here.
+    // Each entry prints in order the first time its trigger condition
+    // is met (e.g. after N interactions, or a specific command).
+    // Paste your list and I'll wire this into bootSequence/processResponse.
+    // ------------------------------------------------------------------
+    const CustomSequence = [
+      // { trigger: "interactionCount", value: 5, text: "NORDIC: ...", type: "alert" },
+    ];
+
     const ObserverEngine = {
       id: SafeStorage.get('nordic_id', `Observer-${Math.floor(1000 + Math.random() * 9000)}`),
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
@@ -278,14 +262,19 @@
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
       interactionCount: 0,
 
+      mediaStream: null,
+      watchEnabled: false,
+      listenEnabled: false,
+      watchTimerId: null,
+      recognition: null,
+      recognitionSupported: false,
+
       init() {
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
-
         document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
 
-        const agreeBtn = document.getElementById('agree-btn');
-        agreeBtn.addEventListener('click', () => {
+        document.getElementById('agree-btn').addEventListener('click', () => {
           this.requestMediaAndBoot();
         });
       },
@@ -296,18 +285,16 @@
         const overlay = document.getElementById('consent-overlay');
 
         try {
-          // Request camera and microphone access
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          this.mediaStream = stream;
           videoElement.srcObject = stream;
           previewContainer.style.display = 'flex';
-          
-          // Brief pause to show feed active status before hiding overlay
+
           setTimeout(() => {
             overlay.style.display = 'none';
             this.startTerminalInterface();
           }, 1200);
         } catch (err) {
-          // Fallback if permission denied or no hardware available
           console.warn("Media access denied or unavailable:", err);
           overlay.style.display = 'none';
           this.startTerminalInterface();
@@ -319,29 +306,22 @@
         const inputField = document.getElementById('command-input');
         const filesBtn = document.getElementById('files-btn');
         const promptSymbol = document.getElementById('prompt-symbol');
+        const watchBtn = document.getElementById('watch-btn');
+        const listenBtn = document.getElementById('listen-btn');
 
         if (this.deviceType === "DESKTOP") {
           document.body.classList.add("desktop-crt");
           inputField.focus();
         }
 
-        form.addEventListener('submit', (e) => {
-          e.preventDefault();
-          this.handleInput();
-        });
+        form.addEventListener('submit', (e) => { e.preventDefault(); this.handleInput(); });
+        filesBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showFilesList(); });
+        watchBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleWatch(); });
+        listenBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleListen(); });
+        document.getElementById('terminal').addEventListener('click', () => inputField.focus());
+        promptSymbol.addEventListener('click', () => inputField.focus());
 
-        filesBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.showFilesList();
-        });
-
-        document.getElementById('terminal').addEventListener('click', () => {
-          inputField.focus();
-        });
-        promptSymbol.addEventListener('click', () => {
-          inputField.focus();
-        });
-
+        this.setupRecognition();
         this.bootSequence();
       },
 
@@ -357,10 +337,7 @@
       bootSequence() {
         setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
         setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
-        
-        setTimeout(() => {
-          this.print(`NORDIC: Connection stable. Session #${this.sessions}.`);
-        }, 800);
+        setTimeout(() => this.print(`NORDIC: Connection stable. Session #${this.sessions}.`), 800);
       },
 
       showFilesList() {
@@ -373,9 +350,174 @@
           output += `${num}. ${file.id.padEnd(24, ' ')} ${status}\n`;
         });
         output += "-------------------------------------------\n";
-        output += "To open a file, type: unlock <FILENAME> <PASSWORD>";
+        output += "To open a file, type: unlock <FILENAME> <PASSWORD>\n";
+        output += "Other commands: watch on/off, listen on/off, status, clear";
         this.print(output, "sys");
       },
+
+      // ---------------- WATCH (camera) ----------------
+
+      toggleWatch() {
+        if (this.watchEnabled) this.stopWatching();
+        else this.startWatching();
+      },
+
+      startWatching() {
+        if (!this.mediaStream) {
+          this.print("NORDIC: No camera feed available. Reload and accept the permissions prompt to enable WATCH.", "alert");
+          return;
+        }
+        const videoTrack = this.mediaStream.getVideoTracks()[0];
+        if (!videoTrack) {
+          this.print("NORDIC: No video track available.", "alert");
+          return;
+        }
+        videoTrack.enabled = true;
+        this.watchEnabled = true;
+        document.getElementById('watch-btn').classList.add('active');
+        document.getElementById('watch-btn').innerText = '[WATCH: ON]';
+        this.print("NORDIC: I can see you now.", "vision");
+
+        // First observation shortly after enabling, then on a loose interval.
+        this.watchTimerId = setTimeout(() => this.watchLoop(), 4000);
+      },
+
+      stopWatching() {
+        this.watchEnabled = false;
+        if (this.watchTimerId) clearTimeout(this.watchTimerId);
+        this.watchTimerId = null;
+        if (this.mediaStream) {
+          const videoTrack = this.mediaStream.getVideoTracks()[0];
+          if (videoTrack) videoTrack.enabled = false;
+        }
+        document.getElementById('watch-btn').classList.remove('active');
+        document.getElementById('watch-btn').innerText = '[WATCH: OFF]';
+        this.print("NORDIC: Looking away.", "vision");
+      },
+
+      watchLoop() {
+        if (!this.watchEnabled) return;
+        this.commentOnFrame();
+        const nextDelay = 25000 + Math.random() * 20000; // ~25-45s
+        this.watchTimerId = setTimeout(() => this.watchLoop(), nextDelay);
+      },
+
+      captureFrame() {
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('capture-canvas');
+        if (!video.videoWidth) return null;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+      },
+
+      async commentOnFrame() {
+        const base64 = this.captureFrame();
+        if (!base64) return;
+
+        try {
+          const response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 1000,
+              messages: [{
+                role: "user",
+                content: [
+                  { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+                  { type: "text", text: "You are NORDIC, an ominous but not graphic AI observer in a horror-themed terminal game. Look at this webcam frame and respond with ONE short, unsettling but PG-rated observation (max 20 words) about what you notice. Never mention that you are an AI model, an API, or Anthropic. Stay in character as NORDIC. Do not describe anything sexual, violent, or identify the person by name." }
+                ]
+              }]
+            })
+          });
+          const data = await response.json();
+          const text = (data.content || []).map(b => b.text || "").join(" ").trim();
+          if (text) this.print(`NORDIC: ${text}`, "vision");
+        } catch (err) {
+          console.warn("Vision comment failed:", err);
+        }
+      },
+
+      // ---------------- LISTEN (microphone, wake-word gated) ----------------
+
+      setupRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          this.recognitionSupported = false;
+          return;
+        }
+        this.recognitionSupported = true;
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = false;
+        this.recognition.lang = 'en-US';
+
+        this.recognition.onresult = (event) => {
+          const last = event.results[event.results.length - 1];
+          const transcript = last[0].transcript.trim();
+          this.handleHeardSpeech(transcript);
+        };
+
+        this.recognition.onerror = (event) => {
+          console.warn("Recognition error:", event.error);
+        };
+
+        this.recognition.onend = () => {
+          // Auto-restart if the user hasn't turned listening off themselves
+          // (browsers stop recognition periodically on their own).
+          if (this.listenEnabled) {
+            try { this.recognition.start(); } catch (e) {}
+          }
+        };
+      },
+
+      toggleListen() {
+        if (this.listenEnabled) this.stopListening();
+        else this.startListening();
+      },
+
+      startListening() {
+        if (!this.recognitionSupported) {
+          this.print("NORDIC: This browser doesn't support speech recognition.", "alert");
+          return;
+        }
+        this.listenEnabled = true;
+        try { this.recognition.start(); } catch (e) {}
+        document.getElementById('listen-btn').classList.add('active');
+        document.getElementById('listen-btn').innerText = '[LISTEN: ON]';
+        this.print("NORDIC: I'm listening. Say \"Nordic\" if you want my attention.", "vision");
+      },
+
+      stopListening() {
+        this.listenEnabled = false;
+        if (this.recognition) {
+          try { this.recognition.stop(); } catch (e) {}
+        }
+        document.getElementById('listen-btn').classList.remove('active');
+        document.getElementById('listen-btn').innerText = '[LISTEN: OFF]';
+        this.print("NORDIC: Going quiet.", "vision");
+      },
+
+      handleHeardSpeech(transcript) {
+        const lower = transcript.toLowerCase();
+        const wakeIdx = lower.indexOf('nordic');
+        // Ignore ambient conversation not directed at Nordic.
+        if (wakeIdx === -1) return;
+
+        const afterWake = transcript.slice(wakeIdx + 6).trim().replace(/^[,:.\s]+/, '');
+        this.print(`> (spoken) ${transcript}`, "user");
+
+        if (afterWake) {
+          this.processResponse(afterWake);
+        } else {
+          this.print("NORDIC: I'm here.", "vision");
+        }
+      },
+
+      // ---------------- Command handling ----------------
 
       handleInput() {
         const inputField = document.getElementById('command-input');
@@ -394,32 +536,27 @@
         const parts = input.trim().split(/\s+/);
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
+          this.print(
+            `[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12\nWATCH: ${this.watchEnabled ? 'ON' : 'OFF'}\nLISTEN: ${this.listenEnabled ? 'ON' : 'OFF'}`,
+            "sys"
+          );
           return;
         }
-        if (clean === 'clear') {
-          document.getElementById('terminal').innerHTML = '';
-          return;
-        }
-        if (clean === 'files' || clean === 'archive' || clean === 'ls') {
-          this.showFilesList();
-          return;
-        }
+        if (clean === 'clear') { document.getElementById('terminal').innerHTML = ''; return; }
+        if (clean === 'files' || clean === 'archive' || clean === 'ls') { this.showFilesList(); return; }
+
+        if (clean === 'watch on') { this.startWatching(); return; }
+        if (clean === 'watch off') { this.stopWatching(); return; }
+        if (clean === 'listen on') { this.startListening(); return; }
+        if (clean === 'listen off') { this.stopListening(); return; }
 
         if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
-          if (parts.length < 3) {
-            this.print("NORDIC: Syntax error.", "alert");
-            return;
-          }
-
+          if (parts.length < 3) { this.print("NORDIC: Syntax error.", "alert"); return; }
           const targetFileName = parts[1].toUpperCase();
           const enteredPassword = parts[2];
           const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
 
-          if (!fileObj) {
-            this.print(`NORDIC: Target not found in registry.`, "alert");
-            return;
-          }
+          if (!fileObj) { this.print(`NORDIC: Target not found in registry.`, "alert"); return; }
 
           if (enteredPassword === fileObj.pass) {
             if (!this.unlockedFiles.includes(fileObj.id)) {
@@ -441,14 +578,12 @@
           this.print("NORDIC: I'm Nordic. A localized system module bound to this terminal interface.");
           return;
         }
-
         if (clean.includes('lore') || clean.includes('story') || clean.includes('director')) {
           this.print("NORDIC: The archive holds the records. What you do with them is up to you.");
           return;
         }
-
         if (clean.includes('help') || clean.includes('commands')) {
-          this.print("NORDIC: Commands: status, clear, files, unlock <FILE> <PASS>.", "sys");
+          this.print("NORDIC: Commands: status, clear, files, unlock <FILE> <PASS>, watch on/off, listen on/off.", "sys");
           return;
         }
 
@@ -459,7 +594,6 @@
           `NORDIC: I'm logging the interaction.`,
           `NORDIC: Understood.`
         ];
-
         this.print(neutralResponses[Math.floor(Math.random() * neutralResponses.length)]);
       }
     };
