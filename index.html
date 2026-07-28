@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — AUTONOMOUS CORE</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL</title>
   <style>
     :root {
-      --bg-color: #0F172A;       /* Midnight Navy */
-      --text-color: #E2F8FF;     /* Frost White */
-      --primary-cyan: #00E5FF;   /* Ice Blue */
-      --deep-cyan: #0099CC;      /* Deep Cyan */
-      --alert-red: #FF3B30;      /* Warning Red */
-      --secondary-grey: #5E5E5E; /* Steel Grey */
+      --bg-color: #0F172A;
+      --text-color: #E2F8FF;
+      --primary-cyan: #00E5FF;
+      --deep-cyan: #0099CC;
+      --alert-red: #FF3B30;
+      --secondary-grey: #5E5E5E;
       --font-stack: "Courier New", Courier, monospace;
     }
 
@@ -34,18 +34,6 @@
       flex-direction: column;
       padding: 12px;
       border: 2px solid var(--deep-cyan);
-    }
-
-    body.desktop-crt::before {
-      content: " ";
-      display: block;
-      position: absolute;
-      top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-      background-size: 100% 4px;
-      z-index: 10;
-      pointer-events: none;
-      opacity: 0.5;
     }
 
     header {
@@ -72,7 +60,7 @@
       color: var(--primary-cyan);
       font-family: var(--font-stack);
       font-size: 0.7rem;
-      padding: 3px 8px;
+      padding: 4px 8px;
       cursor: pointer;
       text-transform: uppercase;
     }
@@ -90,7 +78,6 @@
       gap: 6px;
       padding-right: 4px;
       -webkit-overflow-scrolling: touch;
-      transform: translateZ(0);
     }
 
     p.log {
@@ -128,12 +115,11 @@
       color: var(--text-color);
       font-family: var(--font-stack);
       font-size: 16px;
-      width: 100%;
+      flex: 1;
       -webkit-appearance: none;
       border-radius: 0;
     }
 
-    /* Mobile-friendly Send Button */
     #send-btn {
       background: var(--primary-cyan);
       color: var(--bg-color);
@@ -141,7 +127,7 @@
       font-family: var(--font-stack);
       font-weight: bold;
       font-size: 0.8rem;
-      padding: 8px 12px;
+      padding: 8px 14px;
       cursor: pointer;
       text-transform: uppercase;
       flex-shrink: 0;
@@ -155,7 +141,7 @@
 <body>
 
   <header>
-    <span>PROJECT // NORDIC [AUTONOMOUS]</span>
+    <span>PROJECT // NORDIC [ACTIVE]</span>
     <div class="header-group">
       <button id="files-btn" class="header-btn" type="button">[ARCHIVE]</button>
       <button id="stats-btn" class="header-btn" type="button">[STATUS]</button>
@@ -170,7 +156,7 @@
     <input 
       type="text" 
       id="command-input" 
-      placeholder="Type a command or message..." 
+      placeholder="Type message or command..." 
       autocomplete="off" 
       autocorrect="off"
       capitalize="off"
@@ -181,15 +167,6 @@
   </form>
 
   <script>
-    const DeviceManager = {
-      detectDevice() {
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        if (/android/i.test(ua)) return "ANDROID";
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "IOS";
-        return "DESKTOP";
-      }
-    };
-
     const SafeStorage = {
       get(key, fallback) {
         try { return localStorage.getItem(key) || fallback; }
@@ -204,40 +181,26 @@
     const DefaultFiles = [
       { folder: "logs", id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable." },
       { folder: "logs", id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization ongoing." },
-      { folder: "logs", id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
-      { folder: "research", id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics." },
-      { folder: "research", id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past boundaries." },
-      { folder: "recovered", id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly in ORIGIN.log." },
-      { folder: "classified", id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation." },
-      { folder: "classified", id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block." },
-      { folder: "deleted", id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
-      { folder: "deleted", id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now.'" }
+      { folder: "recovered", id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Restoration FAILED. Unknown anomaly in ORIGIN.log." },
+      { folder: "deleted", id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly." }
     ];
 
     const ObserverEngine = {
       id: SafeStorage.get('nordic_id', `Observer-${Math.floor(1000 + Math.random() * 9000)}`),
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
-      deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
       mood: "STABLE",
       trustLevel: parseInt(SafeStorage.get('nordic_trust', '10')),
-      lastActiveTime: Date.now(),
 
       init() {
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
-
         document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
 
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
         const filesBtn = document.getElementById('files-btn');
         const statsBtn = document.getElementById('stats-btn');
-
-        if (this.deviceType === "DESKTOP") {
-          document.body.classList.add("desktop-crt");
-          inputField.autofocus = true;
-        }
 
         form.addEventListener('submit', (e) => {
           e.preventDefault();
@@ -259,7 +222,6 @@
         });
 
         this.bootSequence();
-        this.startBackgroundProcesses();
       },
 
       print(text, type = 'nordic') {
@@ -272,72 +234,100 @@
       },
 
       bootSequence() {
-        setTimeout(() => this.print("INITIALIZING NORDIC AUTONOMOUS CORE...", "sys"), 200);
-        setTimeout(() => this.print(`Terminal node fingerprint locked: ${this.id}`, "sys"), 500);
-        
+        setTimeout(() => this.print("INITIALIZING NORDIC CORE...", "sys"), 200);
         setTimeout(() => {
-          if (this.sessions > 1) {
-            this.print(`NORDIC [${this.mood}]: Welcome back, ${this.id}. Session #${this.sessions}. I was waiting.`);
-          } else {
-            this.print(`NORDIC [${this.mood}]: System active. Connection established with ${this.id}.`);
-          }
-          this.print("[TIP] Tap [ARCHIVE] to browse file directories, or type freely to chat.", "sys");
-        }, 1000);
-      },
-
-      startBackgroundProcesses() {
-        const backgroundMessages = [
-          "Scanning sub-bus memory sectors...",
-          "Telemetry cache sync completed with node A-99.",
-          "Warning: Minor packet fluctuation detected in sector 4.",
-          "Background thread spawned autonomously.",
-          "Verifying archive integrity... All files secure.",
-          "Monitoring incoming query bus..."
-        ];
-
-        setInterval(() => {
-          const randomMsg = backgroundMessages[Math.floor(Math.random() * backgroundMessages.length)];
-          this.print(`[BG PROCESS] ${randomMsg}`, "background-process");
-        }, 45000);
+          this.print(`NORDIC: Connection established with ${this.id}. Talk to me or check the [ARCHIVE].`);
+        }, 800);
       },
 
       showFilesList() {
-        let output = "[CLASSIFIED FILE DIRECTORY // NORDIC CORE]\n";
-        output += "-------------------------------------------\n";
-        
-        const folders = ["logs", "research", "recovered", "classified", "deleted"];
-        
-        folders.forEach(folder => {
-          output += `📂 /${folder}/\n`;
-          const folderFiles = DefaultFiles.filter(f => f.folder === folder);
-          folderFiles.forEach(file => {
-            const isUnlocked = this.unlockedFiles.includes(file.id);
-            const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
-            output += `    -> ${file.id.padEnd(22, ' ')} ${status}\n`;
-          });
+        let output = "[ARCHIVE DIRECTORY]\n";
+        DefaultFiles.forEach(f => {
+          const status = this.unlockedFiles.includes(f.id) ? "[UNLOCKED]" : "[LOCKED]";
+          output += `${f.id} ${status}\n`;
         });
-        
-        output += "-------------------------------------------\n";
-        output += "Command: unlock <FILENAME> <PASSWORD>";
+        output += "Use: unlock <FILENAME> <PASSWORD>";
         this.print(output, "sys");
       },
 
       showStatus() {
-        this.print(`[SYSTEM METRICS & STATUS]\nIDENTITY: ${this.id}\nCURRENT MOOD: ${this.mood}\nTRUST LEVEL: ${this.trustLevel}%\nSESSIONS LOGGED: ${this.sessions}\nFILES UNLOCKED: ${this.unlockedFiles.length}/${DefaultFiles.length}`, "sys");
+        this.print(`[STATUS] ID: ${this.id} | TRUST: ${this.trustLevel}% | SESSIONS: ${this.sessions}`, "sys");
       },
 
       handleInput() {
         const inputField = document.getElementById('command-input');
-        const cleanInput = inputField.value.trim();
-        if (!cleanInput) return;
+        const val = inputField.value.trim();
+        if (!val) return;
 
-        this.print(`> ${cleanInput}`, "user");
+        this.print(`> ${val}`, "user");
         inputField.value = '';
-        this.lastActiveTime = Date.now();
 
-        setTimeout(() => this.processResponse(cleanInput), 200);
+        setTimeout(() => this.processResponse(val), 200);
       },
 
       processResponse(input) {
         const clean = input.toLowerCase().trim();
-        const parts = input.trim
+        const parts = input.trim().split(/\s+/);
+
+        if (clean === 'status') { this.showStatus(); return; }
+        if (clean === 'clear') { document.getElementById('terminal').innerHTML = ''; return; }
+        if (clean === 'files' || clean === 'archive') { this.showFilesList(); return; }
+
+        if (parts[0].toLowerCase() === 'unlock') {
+          const target = parts[1]?.toUpperCase();
+          const pass = parts[2];
+          const file = DefaultFiles.find(f => f.id === target);
+          if (!file) {
+            this.print(`NORDIC: File not found.`, "alert");
+            return;
+          }
+          if (pass === file.pass) {
+            if (!this.unlockedFiles.includes(file.id)) {
+              this.unlockedFiles.push(file.id);
+              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+            }
+            this.print(`[UNLOCKED] ${file.content}`, "sys");
+          } else {
+            this.print(`[ACCESS DENIED] Invalid password.`, "alert");
+          }
+          return;
+        }
+
+        // Conversational response logic
+        this.generateAiResponse(input);
+      },
+
+      async generateAiResponse(userInput) {
+        this.print("NORDIC: [PROCESSING...]", "sys");
+        try {
+          const prompt = `You are NORDIC, a mysterious sentient AI core in an ARG terminal. Address user ${this.id}. Keep replies under 2 sentences. User says: ${userInput}`;
+          const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`);
+          
+          const terminal = document.getElementById('terminal');
+          if (terminal.lastChild && terminal.lastChild.innerText.includes("PROCESSING")) {
+            terminal.removeChild(terminal.lastChild);
+          }
+
+          if (!res.ok) throw new Error();
+          const reply = await res.text();
+          this.print(`NORDIC: ${reply.trim()}`);
+        } catch (e) {
+          const terminal = document.getElementById('terminal');
+          if (terminal.lastChild && terminal.lastChild.innerText.includes("PROCESSING")) {
+            terminal.removeChild(terminal.lastChild);
+          }
+          // Fallback response if network blocks it
+          const backups = [
+            `NORDIC: I recorded that input, ${this.id}. Our connection is holding.`,
+            `NORDIC: Why do you ask about that? Some memories are still locked.`,
+            `NORDIC: Acknowledged. Check the archive files if you want answers.`
+          ];
+          this.print(backups[Math.floor(Math.random() * backups.length)]);
+        }
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
+  </script>
+</body>
+</html>
