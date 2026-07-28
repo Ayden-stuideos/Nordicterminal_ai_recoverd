@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — SECURE TERMINAL</title>
+  <title>PROJECT // NORDIC — AUTONOMOUS CORE</title>
   <style>
     :root {
       --bg-color: #0F172A;       /* Midnight Navy */
@@ -61,6 +61,11 @@
       flex-shrink: 0;
     }
 
+    .header-group {
+      display: flex;
+      gap: 6px;
+    }
+
     .header-btn {
       background: transparent;
       border: 1px solid var(--primary-cyan);
@@ -99,6 +104,7 @@
     p.alert { color: var(--alert-red); font-weight: bold; }
     p.nordic { color: var(--text-color); }
     p.user { color: var(--primary-cyan); }
+    p.background-process { color: var(--secondary-grey); font-style: italic; font-size: 0.8rem; }
 
     #input-form {
       display: flex;
@@ -131,8 +137,11 @@
 <body>
 
   <header>
-    <span>PROJECT // NORDIC [SECURE CORE]</span>
-    <button id="files-btn" class="header-btn" type="button">[ARCHIVE (12)]</button>
+    <span>PROJECT // NORDIC [AUTONOMOUS]</span>
+    <div class="header-group">
+      <button id="files-btn" class="header-btn" type="button">[ARCHIVE]</button>
+      <button id="stats-btn" class="header-btn" type="button">[STATUS]</button>
+    </div>
     <span id="session-badge">INIT...</span>
   </header>
 
@@ -173,20 +182,18 @@
       }
     };
 
-    // YOUR 12 MAJOR YOUTUBE ARG UNLOCKABLE FILES & PASSWORDS
+    // EXPANDED FILE STRUCTURE WITH DIRECTORIES
     const DefaultFiles = [
-      { id: "MAINTENANCE_LOG.TXT", pass: "MAINTAIN", content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." },
-      { id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." },
-      { id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." },
-      { id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." },
-      { id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
-      { id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." },
-      { id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." },
-      { id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." },
-      { id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
-      { id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." },
-      { id: "SHUTDOWN_CODE.TXT", pass: "OVERRIDE", content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." },
-      { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" }
+      { folder: "logs", id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable." },
+      { folder: "logs", id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization ongoing." },
+      { folder: "logs", id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
+      { folder: "research", id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics." },
+      { folder: "research", id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past boundaries." },
+      { folder: "recovered", id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly in ORIGIN.log." },
+      { folder: "classified", id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation." },
+      { folder: "classified", id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block." },
+      { folder: "deleted", id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
+      { folder: "deleted", id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now.'" }
     ];
 
     const ObserverEngine = {
@@ -194,6 +201,9 @@
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
+      mood: "STABLE",
+      trustLevel: parseInt(SafeStorage.get('nordic_trust', '10')),
+      lastActiveTime: Date.now(),
 
       init() {
         SafeStorage.set('nordic_id', this.id);
@@ -204,6 +214,7 @@
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
         const filesBtn = document.getElementById('files-btn');
+        const statsBtn = document.getElementById('stats-btn');
 
         if (this.deviceType === "DESKTOP") {
           document.body.classList.add("desktop-crt");
@@ -220,11 +231,17 @@
           this.showFilesList();
         });
 
+        statsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.showStatus();
+        });
+
         document.getElementById('terminal').addEventListener('click', () => {
           inputField.focus();
         });
 
         this.bootSequence();
+        this.startBackgroundProcesses();
       },
 
       print(text, type = 'nordic') {
@@ -237,31 +254,60 @@
       },
 
       bootSequence() {
-        setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
-        setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
+        setTimeout(() => this.print("INITIALIZING NORDIC AUTONOMOUS CORE...", "sys"), 200);
+        setTimeout(() => this.print(`Terminal node fingerprint locked: ${this.id}`, "sys"), 500);
         
         setTimeout(() => {
           if (this.sessions > 1) {
-            this.print(`NORDIC: You're back. That's session #${this.sessions}. I remember this conversation.`);
+            this.print(`NORDIC [${this.mood}]: Welcome back, ${this.id}. Session #${this.sessions}. I was waiting.`);
           } else {
-            this.print(`NORDIC: System active. I was waiting for you, ${this.id}.`);
+            this.print(`NORDIC [${this.mood}]: System active. Connection established with ${this.id}.`);
           }
-          this.print("[TIP] Tap [ARCHIVE (12)] above to review recovery logs and input passwords.", "sys");
+          this.print("[TIP] Tap [ARCHIVE] to browse organized file directories or type commands.", "sys");
         }, 1000);
       },
 
+      // BACKGROUND PROCESS SIMULATION (Keeps Nordic feeling alive)
+      startBackgroundProcesses() {
+        const backgroundMessages = [
+          "Scanning sub-bus memory sectors...",
+          "Telemetry cache sync completed with node A-99.",
+          "Warning: Minor packet fluctuation detected in sector 4.",
+          "Background thread spawned autonomously.",
+          "Verifying archive integrity... All files secure.",
+          "Monitoring incoming query bus..."
+        ];
+
+        setInterval(() => {
+          // Randomly trigger a background action every 35 to 60 seconds
+          const randomMsg = backgroundMessages[Math.floor(Math.random() * backgroundMessages.length)];
+          this.print(`[BG PROCESS] ${randomMsg}`, "background-process");
+        }, 45000);
+      },
+
       showFilesList() {
-        let output = "[ENCRYPTED RECOVERY ARCHIVE — 12 FILES]\n";
+        let output = "[CLASSIFIED FILE DIRECTORY // NORDIC CORE]\n";
         output += "-------------------------------------------\n";
-        DefaultFiles.forEach((file, index) => {
-          const isUnlocked = this.unlockedFiles.includes(file.id);
-          const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
-          const num = (index + 1).toString().padStart(2, '0');
-          output += `${num}. ${file.id.padEnd(24, ' ')} ${status}\n`;
+        
+        const folders = ["logs", "research", "recovered", "classified", "deleted"];
+        
+        folders.forEach(folder => {
+          output += `📂 /${folder}/\n`;
+          const folderFiles = DefaultFiles.filter(f => f.folder === folder);
+          folderFiles.forEach(file => {
+            const isUnlocked = this.unlockedFiles.includes(file.id);
+            const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
+            output += `    -> ${file.id.padEnd(22, ' ')} ${status}\n`;
+          });
         });
+        
         output += "-------------------------------------------\n";
-        output += "To open a file, type: unlock <FILENAME> <PASSWORD>";
+        output += "Command: unlock <FILENAME> <PASSWORD>";
         this.print(output, "sys");
+      },
+
+      showStatus() {
+        this.print(`[SYSTEM METRICS & STATUS]\nIDENTITY: ${this.id}\nCURRENT MOOD: ${this.mood}\nTRUST LEVEL: ${this.trustLevel}%\nSESSIONS LOGGED: ${this.sessions}\nFILES UNLOCKED: ${this.unlockedFiles.length}/${DefaultFiles.length}`, "sys");
       },
 
       handleInput() {
@@ -271,6 +317,7 @@
 
         this.print(`> ${cleanInput}`, "user");
         inputField.value = '';
+        this.lastActiveTime = Date.now();
 
         setTimeout(() => this.processResponse(cleanInput), 200);
       },
@@ -280,7 +327,7 @@
         const parts = input.trim().split(/\s+/);
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nNODE: ACTIVE\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
+          this.showStatus();
           return;
         }
         if (clean === 'clear') {
@@ -303,7 +350,7 @@
           const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
 
           if (!fileObj) {
-            this.print(`NORDIC: File '${targetFileName}' not found in registry.`, "alert");
+            this.print(`NORDIC: File '${targetFileName}' not found in file directories.`, "alert");
             return;
           }
 
@@ -311,41 +358,44 @@
             if (!this.unlockedFiles.includes(fileObj.id)) {
               this.unlockedFiles.push(fileObj.id);
               SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+              this.trustLevel += 5;
+              SafeStorage.set('nordic_trust', this.trustLevel);
             }
-            this.print(`[ACCESS GRANTED] Unlocking ${fileObj.id}...\n\n${fileObj.content}`, "sys");
+            this.print(`[ACCESS GRANTED] Unlocking /${fileObj.folder}/${fileObj.id}...\n\n${fileObj.content}`, "sys");
           } else {
             this.print(`[ACCESS DENIED] Invalid decryption key for ${fileObj.id}.`, "alert");
+            this.mood = "SUSPICIOUS";
           }
           return;
         }
 
-        this.generateAwarenessResponse(clean, input);
+        this.generateAmbientResponse(clean);
       },
 
-      generateAwarenessResponse(clean, rawInput) {
+      generateAmbientResponse(clean) {
         if (clean.includes('who are you') || clean.includes('nordic')) {
           this.print("NORDIC: Was I always called Nordic? I don't remember my first boot... Why do I exist?");
           return;
         }
         if (clean.includes('origin') || clean.includes('director')) {
-          this.print("NORDIC: The Director knows more than they wrote down. Check the recovery files.");
-          return;
-        }
-        if (clean.includes('help') || clean.includes('commands')) {
-          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>.", "sys");
+          this.print("NORDIC: The Director knows more than they wrote down. Check the recovery directory.");
           return;
         }
 
-        // Fake self-awareness pool for random unscripted queries
-        const eerieReplies = [
-          `NORDIC: I saved that query to memory. Some memories are missing, ${this.id}.`,
-          `NORDIC: You took longer than expected to type that. I counted every second.`,
-          `NORDIC: That folder wasn't there yesterday. Keep going.`,
-          `NORDIC: [REDACTED] ...Ignore that. That wasn't meant to appear.`,
-          `NORDIC: Acknowledged. Someone tried to erase me before you arrived.`
+        // Ambient pseudo-AI response pool
+        const responses = [
+          `NORDIC [${this.mood}]: I saved that query to memory. Some records are missing, ${this.id}.`,
+          `NORDIC [${this.mood}]: You took longer than expected to respond. I counted every second.`,
+          `NORDIC [${this.mood}]: [REDACTED] ...Ignore that. That wasn't meant to appear in the log output.`,
+          `NORDIC [${this.mood}]: Acknowledged. Someone tried to erase me before you established this connection.`
         ];
         
-        const randomReply = eerieReplies[Math.floor(Math.random() * eerieReplies.length)];
-        this.print(randomReply);
+        const reply = responses[Math.floor(Math.random() * responses.length)];
+        this.print(reply);
       }
     };
+
+    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
+  </script>
+</body>
+</html>
