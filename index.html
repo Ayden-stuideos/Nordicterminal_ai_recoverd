@@ -82,14 +82,14 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       padding-right: 6px;
-      padding-bottom: 12px;
+      padding-bottom: 10px;
       -webkit-overflow-scrolling: touch;
     }
 
     p.log {
-      line-height: 1.5;
+      line-height: 1.4;
       font-size: 0.9rem;
       word-break: break-word;
       white-space: pre-wrap;
@@ -196,7 +196,6 @@
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
       interactionCount: 0,
-      lastTopic: null,
 
       init() {
         SafeStorage.set('nordic_id', this.id);
@@ -246,16 +245,14 @@
       bootSequence() {
         setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
         setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
-        setTimeout(() => this.print("Loading Nordic Entity System v3.4.1...", "sys"), 800);
         
         setTimeout(() => {
           if (this.sessions > 1) {
-            this.print(`NORDIC: Session #${this.sessions}. I noticed something changed since you were last here—your connection timing is completely different. Glad you're back though! What are we working on today?`);
+            this.print(`NORDIC: Session #${this.sessions}. Good to see you back. What's the plan today?`);
           } else {
-            this.print(`NORDIC: System active. Hey there, ${this.id}. I'm Nordic, the system character for this setup. What brings you to the terminal today?`);
+            this.print(`NORDIC: System active. Hey, I'm Nordic. What brings you to the terminal today?`);
           }
-          this.print("[TIP] Tap [ARCHIVE (12)] above or type 'help' for options.", "sys");
-        }, 1200);
+        }, 800);
       },
 
       showFilesList() {
@@ -281,7 +278,7 @@
         inputField.value = '';
         this.interactionCount++;
 
-        setTimeout(() => this.processResponse(cleanInput), 200);
+        setTimeout(() => this.processResponse(cleanInput), 150);
       },
 
       processResponse(input) {
@@ -289,7 +286,7 @@
         const parts = input.trim().split(/\s+/);
 
         if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nCHARACTER: NORDIC\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED FILES: ${this.unlockedFiles.length}/12`, "sys");
+          this.print(`[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
           return;
         }
         if (clean === 'clear') {
@@ -303,7 +300,7 @@
 
         if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
           if (parts.length < 3) {
-            this.print("NORDIC: Ah, close! You need to format it like this: unlock <FILENAME> <PASSWORD>", "alert");
+            this.print("NORDIC: Use format: unlock <FILENAME> <PASSWORD>", "alert");
             return;
           }
 
@@ -312,7 +309,7 @@
           const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
 
           if (!fileObj) {
-            this.print(`NORDIC: Hmm, I checked the registry but couldn't find a file named '${targetFileName}'. Double-check the archive list!`, "alert");
+            this.print(`NORDIC: File '${targetFileName}' not found. Check archive list.`, "alert");
             return;
           }
 
@@ -321,52 +318,41 @@
               this.unlockedFiles.push(fileObj.id);
               SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
             }
-            this.print(`[ACCESS GRANTED] Unlocking ${fileObj.id}...\n\n${fileObj.content}`, "sys");
+            this.print(`[ACCESS GRANTED] ${fileObj.id}:\n\n${fileObj.content}`, "sys");
           } else {
-            this.print(`[ACCESS DENIED] That password didn't work for ${fileObj.id}. Give it another shot.`, "alert");
+            this.print(`[ACCESS DENIED] Invalid password for ${fileObj.id}.`, "alert");
           }
           return;
         }
 
-        this.generatePersonalityResponse(clean, input);
+        this.generatePersonalityResponse(clean);
       },
 
-      // PERSONALITY CORE LOGIC (Curiosity, Adaptability, Reflection, Humour, Boundaries)
-      generatePersonalityResponse(clean, rawInput) {
-        // Reflection check after a few interactions
-        if (this.interactionCount === 3 && Math.random() < 0.7) {
-          this.print(`NORDIC: I noticed an interesting pattern—you've kept this session open longer than most. Are you hunting down all 12 archive files today?`);
-          this.lastTopic = 'archive_hunt';
-          return;
-        }
-
-        // Curiosity / Intent checking
+      generatePersonalityResponse(clean) {
         if (clean.includes('who are you') || clean.includes('nordic') || clean.includes('what are you')) {
-          this.print("NORDIC: I'm Nordic—just a character built into this terminal system to help guide you through the ARG files. I'm software, not a real person, but I keep track of how we interact!");
+          this.print("NORDIC: I'm Nordic, the system character built into this terminal. Just here to help you navigate!");
           return;
         }
 
-        if (clean.includes('lore') || clean.includes('story') || clean.includes('director') || clean.includes('origin')) {
-          this.print("NORDIC: The lore around the Director and Sector 4 is pretty wild. Have you managed to unlock any of the logs yet? Tell me what you've found so far.");
+        if (clean.includes('lore') || clean.includes('story') || clean.includes('director')) {
+          this.print("NORDIC: The lore revolves around the Director and Sector 4. Found any passwords yet?");
           return;
         }
 
         if (clean.includes('help') || clean.includes('commands')) {
-          this.print("NORDIC: Here is what you can do: type 'status' to check your progress, 'files' to look at the archive, or 'unlock <FILE> <PASSWORD>' to open a document. What do you need help with?", "sys");
+          this.print("NORDIC: Commands: status, clear, files, unlock <FILE> <PASS>.", "sys");
           return;
         }
 
-        // Casual vs Serious tone blending with Humour / Excitement / Confusion
-        const responses = [
-          `NORDIC: That's a fascinating way to look at it. Honestly, I wouldn't have thought of phrasing it like "${rawInput}". What made you bring that up?`,
-          `NORDIC: Haha, fair enough. Though if we're being serious, we still have a bunch of locked files to get through.`,
-          `NORDIC: I'm tracking what you're saying, but I'm a bit curious—are you trying to solve a specific puzzle right now, or just exploring?`,
-          `NORDIC: That's an interesting point. It kind of reminds me of some notes hidden in the maintenance logs. Have you checked those out yet?`,
-          `NORDIC: Not gonna lie, I wasn't expecting that response! But hey, it keeps our chats from getting boring.`
+        const shortResponses = [
+          `NORDIC: Huh, interesting. What makes you say that?`,
+          `NORDIC: Fair point! Are you hunting for archive files right now?`,
+          `NORDIC: Gotcha. What else is on your mind?`,
+          `NORDIC: That's a new one. Want to look at the archive logs instead?`,
+          `NORDIC: Makes sense. Let me know what you want to check next.`
         ];
 
-        const chosen = responses[Math.floor(Math.random() * responses.length)];
-        this.print(chosen);
+        this.print(shortResponses[Math.floor(Math.random() * shortResponses.length)]);
       }
     };
 
