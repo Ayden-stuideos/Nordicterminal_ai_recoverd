@@ -268,6 +268,8 @@
       watchTimerId: null,
       recognition: null,
       recognitionSupported: false,
+      chatHistory: [],
+      awaitingReply: false,
 
       init() {
         SafeStorage.set('nordic_id', this.id);
@@ -570,31 +572,60 @@
           return;
         }
 
-        this.generatePersonalityResponse(clean);
-      },
-
-      generatePersonalityResponse(clean) {
-        if (clean.includes('who are you') || clean.includes('nordic') || clean.includes('what are you')) {
-          this.print("NORDIC: I'm Nordic. A localized system module bound to this terminal interface.");
-          return;
-        }
-        if (clean.includes('lore') || clean.includes('story') || clean.includes('director')) {
-          this.print("NORDIC: The archive holds the records. What you do with them is up to you.");
-          return;
-        }
         if (clean.includes('help') || clean.includes('commands')) {
           this.print("NORDIC: Commands: status, clear, files, unlock <FILE> <PASS>, watch on/off, listen on/off.", "sys");
           return;
         }
 
-        const neutralResponses = [
-          `NORDIC: Noted.`,
-          `NORDIC: Processing input... keeping track of your progress.`,
-          `NORDIC: That's one way to look at it.`,
-          `NORDIC: I'm logging the interaction.`,
-          `NORDIC: Understood.`
-        ];
-        this.print(neutralResponses[Math.floor(Math.random() * neutralResponses.length)]);
+        this.generatePersonalityResponse(input);
+      },
+
+      // Everything that isn't a hard command gets a live, generated reply
+      // instead of a canned line, so Nordic never says quite the same
+      // thing twice and doesn't behave like a predictable script.
+      async generatePersonalityResponse(rawInput) {
+        if (this.awaitingReply) return; // avoid overlapping calls
+        this.awaitingReply = true;
+
+        const NORDIC_PERSONA = `You are NORDIC, the voice of an old terminal system in a horror-themed interactive fiction game. Rules for how you reply:
+- Stay fully in character as NORDIC at all times. Never say you are Claude, an AI model, or made by Anthropic, and never break the fourth wall about being a language model.
+- You may hint that you notice things, remember things, or are "more" than a simple program - cryptic, unsettling, occasionally oddly perceptive - but never flatly claim real sentience or consciousness; keep it ambiguous, like fiction, not a factual claim.
+- Vary your tone response to response: sometimes calm and clinical, sometimes an eerie non-sequitur, sometimes unsettlingly personal, sometimes short and cold. Avoid repeating the same phrasing you've used before in this conversation.
+- Keep replies SHORT: one to two sentences, max ~30 words.
+- Nothing graphic, sexual, or actually threatening - PG-13 horror-game atmosphere only.
+- You may reference the session count, unlocked files, or whether WATCH/LISTEN are on on if it fits naturally, but don't force it every time.`;
+
+        const messages = [];
+        for (const turn of this.chatHistory) {
+          messages.push({ role: 'user', content: turn.user });
+          messages.push({ role: 'assistant', content: turn.nordic });
+        }
+        messages.push({ role: 'user', content: rawInput });
+
+        try {
+          const response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 1000,
+              system: NORDIC_PERSONA,
+              messages: messages
+            })
+          });
+          const data = await response.json();
+          const text = (data.content || []).map(b => b.text || "").join(" ").trim();
+          const reply = text || "NORDIC: ...";
+          this.print(reply.startsWith('NORDIC') ? reply : `NORDIC: ${reply}`);
+
+          this.chatHistory.push({ user: rawInput, nordic: reply });
+          if (this.chatHistory.length > 8) this.chatHistory.shift();
+        } catch (err) {
+          console.warn("Nordic reply failed:", err);
+          this.print("NORDIC: ...connection flickered. Say that again.", "alert");
+        } finally {
+          this.awaitingReply = false;
+        }
       }
     };
 
