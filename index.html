@@ -82,17 +82,18 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      padding-right: 4px;
+      gap: 12px; /* Increased gap to prevent overlap */
+      padding-right: 6px;
+      padding-bottom: 12px;
       -webkit-overflow-scrolling: touch;
-      transform: translateZ(0);
     }
 
     p.log {
-      line-height: 1.4;
+      line-height: 1.5;
       font-size: 0.9rem;
       word-break: break-word;
       white-space: pre-wrap;
+      display: block;
     }
 
     p.sys { color: var(--deep-cyan); }
@@ -223,7 +224,6 @@
           this.showFilesList();
         });
 
-        // Ensure clicking anywhere on terminal or prompt focuses input back
         document.getElementById('terminal').addEventListener('click', () => {
           inputField.focus();
         });
