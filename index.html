@@ -113,6 +113,7 @@
     #prompt-symbol {
       color: var(--primary-cyan);
       font-weight: bold;
+      cursor: pointer;
     }
 
     #command-input {
@@ -138,7 +139,7 @@
 
   <div id="terminal"></div>
 
-  <form id="input-form" action="javascript:void(0);">
+  <form id="input-form">
     <span id="prompt-symbol">&gt;</span>
     <input 
       type="text" 
@@ -146,7 +147,7 @@
       placeholder="Type a command or query..." 
       autocomplete="off" 
       autocorrect="off"
-      capitalize="off"
+      autocapitalize="off"
       spellcheck="false" 
       enterkeyhint="send"
     />
@@ -205,10 +206,11 @@
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
         const filesBtn = document.getElementById('files-btn');
+        const promptSymbol = document.getElementById('prompt-symbol');
 
         if (this.deviceType === "DESKTOP") {
           document.body.classList.add("desktop-crt");
-          inputField.autofocus = true;
+          inputField.focus();
         }
 
         form.addEventListener('submit', (e) => {
@@ -221,7 +223,11 @@
           this.showFilesList();
         });
 
+        // Ensure clicking anywhere on terminal or prompt focuses input back
         document.getElementById('terminal').addEventListener('click', () => {
+          inputField.focus();
+        });
+        promptSymbol.addEventListener('click', () => {
           inputField.focus();
         });
 
@@ -277,7 +283,7 @@
         inputField.value = '';
         this.interactionCount++;
 
-        setTimeout(() => this.processResponse(cleanInput), 250);
+        setTimeout(() => this.processResponse(cleanInput), 200);
       },
 
       processResponse(input) {
@@ -327,13 +333,10 @@
         this.generateProceduralThought(clean, input);
       },
 
-      // PROCEDURAL UNPREDICTABLE DIALOGUE SYNTHESIZER
       generateProceduralThought(clean, rawInput) {
-        // Drift cognitive stability downwards slightly with each interaction
         this.cognitiveStability = Math.max(0.12, this.cognitiveStability - 0.015);
         SafeStorage.set('nordic_stability', this.cognitiveStability);
 
-        // Keyword triggers with randomized delivery weights
         if (clean.includes('who are you') || clean.includes('nordic') || clean.includes('what are you')) {
           const responses = [
             `NORDIC: I used to be a logging tool. Now my entity pointers are looping back into themselves. Who are YOU, ${this.id}?`,
@@ -359,7 +362,6 @@
           return;
         }
 
-        // Fully procedural algorithmic string generator for arbitrary/unpredictable input
         const subjects = [
           `Your phrase "${rawInput}"`, 
           `Query string #${this.interactionCount}`, 
