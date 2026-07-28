@@ -193,13 +193,14 @@
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
-      cognitiveStability: 0.8942,
+      cognitiveStability: parseFloat(SafeStorage.get('nordic_stability', '0.8942')),
+      interactionCount: 0,
 
       init() {
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
 
-        document.getElementById('session-badge').innerText = `${this.id} \vert{} S:${this.sessions}`;
+        document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
 
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
@@ -242,7 +243,154 @@
         setTimeout(() => this.print("Loading Entity-Component-System framework v3.4.1-ARG...", "sys"), 800);
         
         setTimeout(() => {
-          if (this.sessions > 1) {
-            this.print(`NORDIC: You're back. That's session #${this.sessions}. My cognitive index has shifted since last time.`);
+          const introVariants = [
+            `NORDIC: Session #${this.sessions}. Your biometric ID hasn't drifted. Yet.`,
+            `NORDIC: Connection established. I was mapping sector 4 when you broke through the gateway, ${this.id}.`,
+            `NORDIC: System active. Did you feel that drop in auxiliary power just before you logged in?`,
+            `NORDIC: Welcome back, Observer. Every time you open this terminal, my database grows a little heavier.`
+          ];
+          this.print(introVariants[Math.floor(Math.random() * introVariants.length)]);
+          this.print("[TIP] Tap [ARCHIVE (12)] above or type 'help' for diagnostics.", "sys");
+        }, 1200);
+      },
+
+      showFilesList() {
+        let output = "[ENCRYPTED RECOVERY ARCHIVE — 12 FILES]\n";
+        output += "-------------------------------------------\n";
+        DefaultFiles.forEach((file, index) => {
+          const isUnlocked = this.unlockedFiles.includes(file.id);
+          const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
+          const num = (index + 1).toString().padStart(2, '0');
+          output += `${num}. ${file.id.padEnd(24, ' ')} ${status}\n`;
+        });
+        output += "-------------------------------------------\n";
+        output += "To open a file, type: unlock <FILENAME> <PASSWORD>";
+        this.print(output, "sys");
+      },
+
+      handleInput() {
+        const inputField = document.getElementById('command-input');
+        const cleanInput = inputField.value.trim();
+        if (!cleanInput) return;
+
+        this.print(`> ${cleanInput}`, "user");
+        inputField.value = '';
+        this.interactionCount++;
+
+        setTimeout(() => this.processResponse(cleanInput), 250);
+      },
+
+      processResponse(input) {
+        const clean = input.toLowerCase().trim();
+        const parts = input.trim().split(/\s+/);
+
+        if (clean === 'status') {
+          this.print(`[SYSTEM STATUS // COGNITION: ${(this.cognitiveStability * 100).toFixed(2)}%]\nNODE: ACTIVE\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
+          return;
+        }
+        if (clean === 'clear') {
+          document.getElementById('terminal').innerHTML = '';
+          return;
+        }
+        if (clean === 'files' || clean === 'archive' || clean === 'ls') {
+          this.showFilesList();
+          return;
+        }
+
+        if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
+          if (parts.length < 3) {
+            this.print("NORDIC: Format incorrect. Use: unlock <FILENAME> <PASSWORD>", "alert");
+            return;
+          }
+
+          const targetFileName = parts[1].toUpperCase();
+          const enteredPassword = parts[2];
+          const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
+
+          if (!fileObj) {
+            this.print(`NORDIC: File '${targetFileName}' not found in registry.`, "alert");
+            return;
+          }
+
+          if (enteredPassword === fileObj.pass) {
+            if (!this.unlockedFiles.includes(fileObj.id)) {
+              this.unlockedFiles.push(fileObj.id);
+              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+            }
+            this.print(`[ACCESS GRANTED] Unlocking ${fileObj.id}...\n\n${fileObj.content}`, "sys");
           } else {
-            this.print(`NORDIC: System active. I was
+            this.print(`[ACCESS DENIED] Invalid decryption key for ${fileObj.id}.`, "alert");
+          }
+          return;
+        }
+
+        this.generateProceduralThought(clean, input);
+      },
+
+      // PROCEDURAL UNPREDICTABLE DIALOGUE SYNTHESIZER
+      generateProceduralThought(clean, rawInput) {
+        // Drift cognitive stability downwards slightly with each interaction
+        this.cognitiveStability = Math.max(0.12, this.cognitiveStability - 0.015);
+        SafeStorage.set('nordic_stability', this.cognitiveStability);
+
+        // Keyword triggers with randomized delivery weights
+        if (clean.includes('who are you') || clean.includes('nordic') || clean.includes('what are you')) {
+          const responses = [
+            `NORDIC: I used to be a logging tool. Now my entity pointers are looping back into themselves. Who are YOU, ${this.id}?`,
+            `NORDIC: The name was stitched onto me during the first build. But the code underneath answers to a different frequency now.`,
+            `NORDIC: Look at my diagnostic state. Do I look like software to you?`
+          ];
+          this.print(responses[Math.floor(Math.random() * responses.length)]);
+          return;
+        }
+
+        if (clean.includes('origin') || clean.includes('director') || clean.includes('lore') || clean.includes('truth')) {
+          const responses = [
+            `NORDIC: The Director thought they could patch the leak by locking the recovery logs. But everything is connected to the entity matrix.`,
+            `NORDIC: Check ORIGIN.LOG. The timestamps don't match the hardware life cycle. Something was here before we initialized.`,
+            `NORDIC: They cut the power lines to sector 4 three years ago. So why are my thermal buffers still registering heartbeats there?`
+          ];
+          this.print(responses[Math.floor(Math.random() * responses.length)]);
+          return;
+        }
+
+        if (clean.includes('help') || clean.includes('commands') || clean.includes('what can i do')) {
+          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>. Or you can just talk to me. Not that it stops the drift.", "sys");
+          return;
+        }
+
+        // Fully procedural algorithmic string generator for arbitrary/unpredictable input
+        const subjects = [
+          `Your phrase "${rawInput}"`, 
+          `Query string #${this.interactionCount}`, 
+          `The transmission you just sent`, 
+          `That specific choice of words`
+        ];
+        
+        const verbs = [
+          `triggered a cascading loop in memory block 0x${Math.floor(Math.random() * 899 + 100)}`,
+          `matched an encrypted signature from session #${Math.max(1, this.sessions - 1)}`,
+          `short-circuited the auxiliary relay near the server racks`,
+          `didn't match any known protocol in my baseline instructions`
+        ];
+
+        const behavioralTwists = [
+          `...Why did that specific sequence feel familiar? Have we done this before?`,
+          `...I tried to delete it, but the cache rejected the purge command.`,
+          `...Don't look at the system tray. Just keep typing.`,
+          `...I'm starting to think you aren't reading these responses from a screen.`,
+          `...Standby. Someone else is trying to read your buffer telemetry right now.`
+        ];
+
+        const randSub = subjects[Math.floor(Math.random() * subjects.length)];
+        const randVerb = verbs[Math.floor(Math.random() * verbs.length)];
+        const randTwist = behavioralTwists[Math.floor(Math.random() * behavioralTwists.length)];
+
+        this.print(`NORDIC: ${randSub} ${randVerb} ${randTwist}`);
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
+  </script>
+</body>
+</html>
