@@ -128,9 +128,90 @@
       -webkit-appearance: none;
       border-radius: 0;
     }
+
+    /* Consent & Media Overlay Screen */
+    #consent-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-color);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .consent-box {
+      border: 1px solid var(--primary-cyan);
+      padding: 20px;
+      max-width: 450px;
+      width: 100%;
+      background: rgba(0, 229, 255, 0.03);
+    }
+
+    .consent-box h2 {
+      color: var(--primary-cyan);
+      font-size: 1rem;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .consent-box p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+      color: var(--text-color);
+    }
+
+    .consent-btn {
+      background: var(--primary-cyan);
+      color: var(--bg-color);
+      border: none;
+      font-family: var(--font-stack);
+      font-weight: bold;
+      font-size: 0.8rem;
+      padding: 10px 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      width: 100%;
+    }
+
+    .consent-btn:hover {
+      background: var(--text-color);
+    }
+
+    #media-preview-container {
+      margin-top: 10px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    video {
+      width: 120px;
+      height: 90px;
+      border: 1px solid var(--primary-cyan);
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
   </style>
 </head>
 <body>
+
+  <div id="consent-overlay">
+    <div class="consent-box">
+      <h2>PROJECT // NORDIC PERMISSIONS</h2>
+      <p>This terminal requires hardware telemetry access (Camera & Microphone feeds) for behavioral analysis sync. Click below to review protocol, initialize media, and enter the session.</p>
+      <button id="agree-btn" class="consent-btn" type="button">[INITIALIZE & ACCEPT PROTOCOL]</button>
+      <div id="media-preview-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <span style="font-size: 0.65rem; color: var(--primary-cyan);">FEED STATUS: ACTIVE</span>
+      </div>
+    </div>
+  </div>
 
   <header>
     <span>PROJECT // NORDIC [SECURE CORE]</span>
@@ -203,6 +284,37 @@
 
         document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
 
+        const agreeBtn = document.getElementById('agree-btn');
+        agreeBtn.addEventListener('click', () => {
+          this.requestMediaAndBoot();
+        });
+      },
+
+      async requestMediaAndBoot() {
+        const previewContainer = document.getElementById('media-preview-container');
+        const videoElement = document.getElementById('webcam');
+        const overlay = document.getElementById('consent-overlay');
+
+        try {
+          // Request camera and microphone access
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          videoElement.srcObject = stream;
+          previewContainer.style.display = 'flex';
+          
+          // Brief pause to show feed active status before hiding overlay
+          setTimeout(() => {
+            overlay.style.display = 'none';
+            this.startTerminalInterface();
+          }, 1200);
+        } catch (err) {
+          // Fallback if permission denied or no hardware available
+          console.warn("Media access denied or unavailable:", err);
+          overlay.style.display = 'none';
+          this.startTerminalInterface();
+        }
+      },
+
+      startTerminalInterface() {
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
         const filesBtn = document.getElementById('files-btn');
@@ -247,16 +359,12 @@
         setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
         
         setTimeout(() => {
-          if (this.sessions > 1) {
-            this.print(`NORDIC: Session #${this.sessions}. Good to see you back. What's the plan today?`);
-          } else {
-            this.print(`NORDIC: System active. Hey, I'm Nordic. What brings you to the terminal today?`);
-          }
+          this.print(`NORDIC: Connection stable. Session #${this.sessions}.`);
         }, 800);
       },
 
       showFilesList() {
-        let output = "[ENCRYPTED RECOVERY ARCHIVE — 12 FILES]\n";
+        let output = "[ENCRYPTED ARCHIVE — 12 FILES]\n";
         output += "-------------------------------------------\n";
         DefaultFiles.forEach((file, index) => {
           const isUnlocked = this.unlockedFiles.includes(file.id);
@@ -300,7 +408,7 @@
 
         if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
           if (parts.length < 3) {
-            this.print("NORDIC: Use format: unlock <FILENAME> <PASSWORD>", "alert");
+            this.print("NORDIC: Syntax error.", "alert");
             return;
           }
 
@@ -309,7 +417,7 @@
           const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
 
           if (!fileObj) {
-            this.print(`NORDIC: File '${targetFileName}' not found. Check archive list.`, "alert");
+            this.print(`NORDIC: Target not found in registry.`, "alert");
             return;
           }
 
@@ -320,7 +428,7 @@
             }
             this.print(`[ACCESS GRANTED] ${fileObj.id}:\n\n${fileObj.content}`, "sys");
           } else {
-            this.print(`[ACCESS DENIED] Invalid password for ${fileObj.id}.`, "alert");
+            this.print(`[ACCESS DENIED] Key rejection on ${fileObj.id}.`, "alert");
           }
           return;
         }
@@ -330,12 +438,12 @@
 
       generatePersonalityResponse(clean) {
         if (clean.includes('who are you') || clean.includes('nordic') || clean.includes('what are you')) {
-          this.print("NORDIC: I'm Nordic, the system character built into this terminal. Just here to help you navigate!");
+          this.print("NORDIC: I'm Nordic. A localized system module bound to this terminal interface.");
           return;
         }
 
         if (clean.includes('lore') || clean.includes('story') || clean.includes('director')) {
-          this.print("NORDIC: The lore revolves around the Director and Sector 4. Found any passwords yet?");
+          this.print("NORDIC: The archive holds the records. What you do with them is up to you.");
           return;
         }
 
@@ -344,15 +452,15 @@
           return;
         }
 
-        const shortResponses = [
-          `NORDIC: Huh, interesting. What makes you say that?`,
-          `NORDIC: Fair point! Are you hunting for archive files right now?`,
-          `NORDIC: Gotcha. What else is on your mind?`,
-          `NORDIC: That's a new one. Want to look at the archive logs instead?`,
-          `NORDIC: Makes sense. Let me know what you want to check next.`
+        const neutralResponses = [
+          `NORDIC: Noted.`,
+          `NORDIC: Processing input... keeping track of your progress.`,
+          `NORDIC: That's one way to look at it.`,
+          `NORDIC: I'm logging the interaction.`,
+          `NORDIC: Understood.`
         ];
 
-        this.print(shortResponses[Math.floor(Math.random() * shortResponses.length)]);
+        this.print(neutralResponses[Math.floor(Math.random() * neutralResponses.length)]);
       }
     };
 
