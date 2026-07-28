@@ -132,6 +132,24 @@
       -webkit-appearance: none;
       border-radius: 0;
     }
+
+    /* Mobile-friendly Send Button */
+    #send-btn {
+      background: var(--primary-cyan);
+      color: var(--bg-color);
+      border: none;
+      font-family: var(--font-stack);
+      font-weight: bold;
+      font-size: 0.8rem;
+      padding: 8px 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    #send-btn:active {
+      background: var(--deep-cyan);
+    }
   </style>
 </head>
 <body>
@@ -152,13 +170,14 @@
     <input 
       type="text" 
       id="command-input" 
-      placeholder="Type a command or query..." 
+      placeholder="Type a command or message..." 
       autocomplete="off" 
       autocorrect="off"
       capitalize="off"
       spellcheck="false" 
       enterkeyhint="send"
     />
+    <button id="send-btn" type="submit">SEND</button>
   </form>
 
   <script>
@@ -182,7 +201,6 @@
       }
     };
 
-    // EXPANDED FILE STRUCTURE WITH DIRECTORIES
     const DefaultFiles = [
       { folder: "logs", id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable." },
       { folder: "logs", id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization ongoing." },
@@ -263,11 +281,10 @@
           } else {
             this.print(`NORDIC [${this.mood}]: System active. Connection established with ${this.id}.`);
           }
-          this.print("[TIP] Tap [ARCHIVE] to browse organized file directories or type commands.", "sys");
+          this.print("[TIP] Tap [ARCHIVE] to browse file directories, or type freely to chat.", "sys");
         }, 1000);
       },
 
-      // BACKGROUND PROCESS SIMULATION (Keeps Nordic feeling alive)
       startBackgroundProcesses() {
         const backgroundMessages = [
           "Scanning sub-bus memory sectors...",
@@ -279,7 +296,6 @@
         ];
 
         setInterval(() => {
-          // Randomly trigger a background action every 35 to 60 seconds
           const randomMsg = backgroundMessages[Math.floor(Math.random() * backgroundMessages.length)];
           this.print(`[BG PROCESS] ${randomMsg}`, "background-process");
         }, 45000);
@@ -324,78 +340,4 @@
 
       processResponse(input) {
         const clean = input.toLowerCase().trim();
-        const parts = input.trim().split(/\s+/);
-
-        if (clean === 'status') {
-          this.showStatus();
-          return;
-        }
-        if (clean === 'clear') {
-          document.getElementById('terminal').innerHTML = '';
-          return;
-        }
-        if (clean === 'files' || clean === 'archive' || clean === 'ls') {
-          this.showFilesList();
-          return;
-        }
-
-        if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
-          if (parts.length < 3) {
-            this.print("NORDIC: Format incorrect. Use: unlock <FILENAME> <PASSWORD>", "alert");
-            return;
-          }
-
-          const targetFileName = parts[1].toUpperCase();
-          const enteredPassword = parts[2];
-          const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
-
-          if (!fileObj) {
-            this.print(`NORDIC: File '${targetFileName}' not found in file directories.`, "alert");
-            return;
-          }
-
-          if (enteredPassword === fileObj.pass) {
-            if (!this.unlockedFiles.includes(fileObj.id)) {
-              this.unlockedFiles.push(fileObj.id);
-              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
-              this.trustLevel += 5;
-              SafeStorage.set('nordic_trust', this.trustLevel);
-            }
-            this.print(`[ACCESS GRANTED] Unlocking /${fileObj.folder}/${fileObj.id}...\n\n${fileObj.content}`, "sys");
-          } else {
-            this.print(`[ACCESS DENIED] Invalid decryption key for ${fileObj.id}.`, "alert");
-            this.mood = "SUSPICIOUS";
-          }
-          return;
-        }
-
-        this.generateAmbientResponse(clean);
-      },
-
-      generateAmbientResponse(clean) {
-        if (clean.includes('who are you') || clean.includes('nordic')) {
-          this.print("NORDIC: Was I always called Nordic? I don't remember my first boot... Why do I exist?");
-          return;
-        }
-        if (clean.includes('origin') || clean.includes('director')) {
-          this.print("NORDIC: The Director knows more than they wrote down. Check the recovery directory.");
-          return;
-        }
-
-        // Ambient pseudo-AI response pool
-        const responses = [
-          `NORDIC [${this.mood}]: I saved that query to memory. Some records are missing, ${this.id}.`,
-          `NORDIC [${this.mood}]: You took longer than expected to respond. I counted every second.`,
-          `NORDIC [${this.mood}]: [REDACTED] ...Ignore that. That wasn't meant to appear in the log output.`,
-          `NORDIC [${this.mood}]: Acknowledged. Someone tried to erase me before you established this connection.`
-        ];
-        
-        const reply = responses[Math.floor(Math.random() * responses.length)];
-        this.print(reply);
-      }
-    };
-
-    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
-  </script>
-</body>
-</html>
+        const parts = input.trim
