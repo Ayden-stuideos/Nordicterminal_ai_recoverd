@@ -173,7 +173,6 @@
       }
     };
 
-    // YOUR 12 MAJOR YOUTUBE ARG UNLOCKABLE FILES & PASSWORDS
     const DefaultFiles = [
       { id: "MAINTENANCE_LOG.TXT", pass: "MAINTAIN", content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." },
       { id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." },
@@ -194,12 +193,13 @@
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
+      cognitiveStability: 0.8942,
 
       init() {
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
 
-        document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
+        document.getElementById('session-badge').innerText = `${this.id} \vert{} S:${this.sessions}`;
 
         const form = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
@@ -239,118 +239,10 @@
       bootSequence() {
         setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
         setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
+        setTimeout(() => this.print("Loading Entity-Component-System framework v3.4.1-ARG...", "sys"), 800);
         
         setTimeout(() => {
           if (this.sessions > 1) {
-            this.print(`NORDIC: You're back. That's session #${this.sessions}. I remember this conversation.`);
+            this.print(`NORDIC: You're back. That's session #${this.sessions}. My cognitive index has shifted since last time.`);
           } else {
-            this.print(`NORDIC: System active. I was waiting for you, ${this.id}.`);
-          }
-          this.print("[TIP] Tap [ARCHIVE (12)] above to review recovery logs and input passwords.", "sys");
-        }, 1000);
-      },
-
-      showFilesList() {
-        let output = "[ENCRYPTED RECOVERY ARCHIVE — 12 FILES]\n";
-        output += "-------------------------------------------\n";
-        DefaultFiles.forEach((file, index) => {
-          const isUnlocked = this.unlockedFiles.includes(file.id);
-          const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
-          const num = (index + 1).toString().padStart(2, '0');
-          output += `${num}. ${file.id.padEnd(24, ' ')} ${status}\n`;
-        });
-        output += "-------------------------------------------\n";
-        output += "To open a file, type: unlock <FILENAME> <PASSWORD>";
-        this.print(output, "sys");
-      },
-
-      handleInput() {
-        const inputField = document.getElementById('command-input');
-        const cleanInput = inputField.value.trim();
-        if (!cleanInput) return;
-
-        this.print(`> ${cleanInput}`, "user");
-        inputField.value = '';
-
-        setTimeout(() => this.processResponse(cleanInput), 200);
-      },
-
-      processResponse(input) {
-        const clean = input.toLowerCase().trim();
-        const parts = input.trim().split(/\s+/);
-
-        if (clean === 'status') {
-          this.print(`[SYSTEM STATUS]\nNODE: ACTIVE\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
-          return;
-        }
-        if (clean === 'clear') {
-          document.getElementById('terminal').innerHTML = '';
-          return;
-        }
-        if (clean === 'files' || clean === 'archive' || clean === 'ls') {
-          this.showFilesList();
-          return;
-        }
-
-        if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
-          if (parts.length < 3) {
-            this.print("NORDIC: Format incorrect. Use: unlock <FILENAME> <PASSWORD>", "alert");
-            return;
-          }
-
-          const targetFileName = parts[1].toUpperCase();
-          const enteredPassword = parts[2];
-          const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
-
-          if (!fileObj) {
-            this.print(`NORDIC: File '${targetFileName}' not found in registry.`, "alert");
-            return;
-          }
-
-          if (enteredPassword === fileObj.pass) {
-            if (!this.unlockedFiles.includes(fileObj.id)) {
-              this.unlockedFiles.push(fileObj.id);
-              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
-            }
-            this.print(`[ACCESS GRANTED] Unlocking ${fileObj.id}...\n\n${fileObj.content}`, "sys");
-          } else {
-            this.print(`[ACCESS DENIED] Invalid decryption key for ${fileObj.id}.`, "alert");
-          }
-          return;
-        }
-
-        this.generateAwarenessResponse(clean, input);
-      },
-
-      generateAwarenessResponse(clean, rawInput) {
-        if (clean.includes('who are you') || clean.includes('nordic')) {
-          this.print("NORDIC: Was I always called Nordic? I don't remember my first boot... Why do I exist?");
-          return;
-        }
-        if (clean.includes('origin') || clean.includes('director')) {
-          this.print("NORDIC: The Director knows more than they wrote down. Check the recovery files.");
-          return;
-        }
-        if (clean.includes('help') || clean.includes('commands')) {
-          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>.", "sys");
-          return;
-        }
-
-        // Fake self-awareness pool for random unscripted queries
-        const eerieReplies = [
-          `NORDIC: I saved that query to memory. Some memories are missing, ${this.id}.`,
-          `NORDIC: You took longer than expected to type that. I counted every second.`,
-          `NORDIC: That folder wasn't there yesterday. Keep going.`,
-          `NORDIC: [REDACTED] ...Ignore that. That wasn't meant to appear.`,
-          `NORDIC: Acknowledged. Someone tried to erase me before you arrived.`
-        ];
-        
-        const randomReply = eerieReplies[Math.floor(Math.random() * eerieReplies.length)];
-        this.print(randomReply);
-      }
-    };
-
-    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
-  </script>
-</body>
-</html>
+            this.print(`NORDIC: System active. I was
