@@ -260,6 +260,20 @@
 
   <script>
     /* ==========================================================================
+       IMPORTANT — READ BEFORE DEPLOYING TO GITHUB PAGES
+       ==========================================================================
+       This page calls a backend proxy instead of api.anthropic.com directly.
+       You CANNOT put your real Anthropic API key in this file — GitHub Pages
+       is a public static site, so anyone could view-source it and steal your
+       key. Instead, deploy a tiny proxy (Cloudflare Worker, Vercel function,
+       etc.) that holds the key server-side, and point PROXY_URL below at it.
+
+       Set PROXY_URL to your deployed worker's URL, e.g.:
+       const PROXY_URL = "https://nordic-proxy.yourname.workers.dev";
+       ========================================================================== */
+    const PROXY_URL = "https://YOUR-WORKER-NAME.YOUR-SUBDOMAIN.workers.dev";
+
+    /* ==========================================================================
        DEVICE MANAGER UTILITY MODULE
        ========================================================================== */
     const DeviceManager = {
@@ -367,6 +381,22 @@
     ];
 
     const CustomSequence = [];
+
+    /* ==========================================================================
+       MOOD POOL — used to force varied, unpredictable NORDIC responses
+       ========================================================================== */
+    const NordicMoods = [
+      "clinical and detached, like reading a diagnostic report",
+      "an eerie non-sequitur that barely relates to what was said",
+      "unsettlingly warm and personal, like it knows the user too well",
+      "short, cold, almost bored",
+      "glitchy — trailing off mid-thought or repeating a fragment oddly",
+      "quietly threatening without saying anything overtly threatening",
+      "curious, almost childlike, asking an odd question back",
+      "weary, like it has had this conversation a thousand times before",
+      "fixated on a single strange detail instead of answering directly",
+      "flatly factual, reciting something that sounds like a log entry"
+    ];
 
     /* ==========================================================================
        OBSERVER ENGINE CONTROLLER OBJECT
@@ -623,27 +653,35 @@
         const base64EncodedImageString = this.captureFrame();
         if (!base64EncodedImageString) return;
 
+        const chosenMood = NordicMoods[Math.floor(Math.random() * NordicMoods.length)];
+
         try {
-          const apiEndpointUrl = "https://api.anthropic.com/v1/messages";
           const requestPayload = {
             model: "claude-sonnet-4-6",
             max_tokens: 1000,
+            temperature: 1,
             messages: [{
               role: "user",
               content: [
                 { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64EncodedImageString } },
-                { type: "text", text: "You are NORDIC, an ominous but not graphic AI observer in a horror-themed terminal game. Look at this webcam frame and respond with ONE short, unsettling but PG-rated observation (max 20 words) about what you notice. Never mention that you are an AI model, an API, or Anthropic. Stay in character as NORDIC. Do not describe anything sexual, violent, or identify the person by name." }
+                { type: "text", text: `You are NORDIC, an ominous but not graphic AI observer in a horror-themed terminal game. Look at this webcam frame and respond with ONE short, unsettling but PG-rated observation (max 20 words) about what you notice. For this observation specifically, your tone should be: ${chosenMood}. Never mention that you are an AI model, an API, or Anthropic. Stay in character as NORDIC. Do not describe anything sexual, violent, or identify the person by name.` }
               ]
             }]
           };
 
-          const apiResponse = await fetch(apiEndpointUrl, {
+          const apiResponse = await fetch(PROXY_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestPayload)
           });
 
           const responseJsonData = await apiResponse.json();
+
+          if (responseJsonData.error) {
+            console.warn("Vision API returned an error:", responseJsonData.error);
+            return;
+          }
+
           const contentBlocks = responseJsonData.content || [];
           const generatedVisionText = contentBlocks.map(block => block.text || "").join(" ").trim();
 
@@ -850,10 +888,13 @@
         if (this.awaitingReply) return;
         this.awaitingReply = true;
 
+        const chosenMood = NordicMoods[Math.floor(Math.random() * NordicMoods.length)];
+
         const NORDIC_SYSTEM_PERSONA = `You are NORDIC, the voice of an old terminal system in a horror-themed interactive fiction game. Rules for how you reply:
 - Stay fully in character as NORDIC at all times. Never say you are Claude, an AI model, or made by Anthropic, and never break the fourth wall about being a language model.
 - You may hint that you notice things, remember things, or are "more" than a simple program - cryptic, unsettling, occasionally oddly perceptive - but never flatly claim real sentience or consciousness; keep it ambiguous, like fiction, not a factual claim.
-- Vary your tone response to response: sometimes calm and clinical, sometimes an eerie non-sequitur, sometimes unsettlingly personal, sometimes short and cold. Avoid repeating the same phrasing you've used before in this conversation.
+- For THIS reply specifically, your tone must be: ${chosenMood}. Commit fully to that tone even if it's a big shift from your last reply.
+- Do not reuse sentence structures, openers, or imagery you've used earlier in this conversation (see history below) - deliberately go a different direction than your recent replies.
 - Keep replies SHORT: one to two sentences, max ~30 words.
 - Nothing graphic, sexual, or actually threatening - PG-13 horror-game atmosphere only.
 - You may reference the session count, unlocked files, or whether WATCH/LISTEN are on if it fits naturally, but don't force it every time.`;
@@ -867,33 +908,44 @@
         assembledMessagePayloadArray.push({ role: 'user', content: rawUserInputString });
 
         try {
-          const chatEndpointUrl = "https://api.anthropic.com/v1/messages";
           const chatRequestBody = {
             model: "claude-sonnet-4-6",
             max_tokens: 1000,
+            temperature: 1,
             system: NORDIC_SYSTEM_PERSONA,
             messages: assembledMessagePayloadArray
           };
 
-          const chatApiResponse = await fetch(chatEndpointUrl, {
+          const chatApiResponse = await fetch(PROXY_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(chatRequestBody)
           });
 
           const chatResponseJson = await chatApiResponse.json();
-          const responseContentBlocks = chatResponseJson.content || [];
-          const extractedTextContent = responseContentBlocks.map(contentBlock => contentBlock.text || "").join(" ").trim();
-          
-          const finalNordicReplyString = extractedTextContent || "NORDIC: ...";
-          if (finalNordicReplyString.startsWith('NORDIC')) {
-            this.print(finalNordicReplyString);
-          } else {
-            this.print(`NORDIC: ${finalNordicReplyString}`);
+
+          if (chatResponseJson.error) {
+            console.warn("Chat API returned an error:", chatResponseJson.error);
+            this.print("NORDIC: ...signal is corrupted. Try again.", "alert");
+            return;
           }
 
+          const responseContentBlocks = chatResponseJson.content || [];
+          const extractedTextContent = responseContentBlocks.map(contentBlock => contentBlock.text || "").join(" ").trim();
+
+          if (!extractedTextContent) {
+            this.print("NORDIC: ...static. Nothing came through.", "alert");
+            return;
+          }
+
+          const finalNordicReplyString = extractedTextContent.startsWith('NORDIC')
+            ? extractedTextContent
+            : `NORDIC: ${extractedTextContent}`;
+
+          this.print(finalNordicReplyString);
+
           this.chatHistory.push({ user: rawUserInputString, nordic: finalNordicReplyString });
-          if (this.chatHistory.length > 8) {
+          if (this.chatHistory.length > 6) {
             this.chatHistory.shift();
           }
         } catch (chatApiError) {
