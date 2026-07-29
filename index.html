@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — SECURE TERMINAL</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL (VERBOSE BUILD)</title>
   <style>
     :root {
       --bg-color: #0F172A;       /* Midnight Navy */
@@ -15,7 +15,12 @@
       --font-stack: "Courier New", Courier, monospace;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* CSS Reset and Box Sizing Declarations */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     html, body {
       height: 100%;
@@ -32,11 +37,15 @@
       border: 2px solid var(--deep-cyan);
     }
 
+    /* CRT Scanline Overlay Styling */
     body.desktop-crt::before {
       content: " ";
       display: block;
       position: absolute;
-      top: 0; left: 0; bottom: 0; right: 0;
+      top: 0; 
+      left: 0; 
+      bottom: 0; 
+      right: 0;
       background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
       background-size: 100% 4px;
       z-index: 10;
@@ -44,6 +53,7 @@
       opacity: 0.5;
     }
 
+    /* Terminal Header Bar Layout */
     header {
       border-bottom: 1px solid var(--secondary-grey);
       padding-bottom: 6px;
@@ -68,6 +78,7 @@
       padding: 3px 8px;
       cursor: pointer;
       text-transform: uppercase;
+      transition: background 0.2s, color 0.2s;
     }
 
     .header-btn.active {
@@ -75,8 +86,12 @@
       color: var(--bg-color);
     }
 
-    .header-btn:active { background: var(--primary-cyan); color: var(--bg-color); }
+    .header-btn:active { 
+      background: var(--primary-cyan); 
+      color: var(--bg-color); 
+    }
 
+    /* Scrollable Terminal Output Window */
     #terminal {
       flex: 1;
       overflow-y: auto;
@@ -88,13 +103,20 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    p.log { line-height: 1.4; font-size: 0.9rem; word-break: break-word; white-space: pre-wrap; display: block; }
+    p.log { 
+      line-height: 1.4; 
+      font-size: 0.9rem; 
+      word-break: break-word; 
+      white-space: pre-wrap; 
+      display: block; 
+    }
     p.sys { color: var(--deep-cyan); }
     p.alert { color: var(--alert-red); font-weight: bold; }
     p.nordic { color: var(--text-color); }
     p.user { color: var(--primary-cyan); }
     p.vision { color: #B388FF; font-style: italic; }
 
+    /* Command Line Input Wrapper */
     #input-form {
       display: flex;
       align-items: center;
@@ -105,7 +127,11 @@
       flex-shrink: 0;
     }
 
-    #prompt-symbol { color: var(--primary-cyan); font-weight: bold; cursor: pointer; }
+    #prompt-symbol { 
+      color: var(--primary-cyan); 
+      font-weight: bold; 
+      cursor: pointer; 
+    }
 
     #command-input {
       background: transparent;
@@ -119,9 +145,13 @@
       border-radius: 0;
     }
 
+    /* Initial Permission Modal Overlay */
     #consent-overlay {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0;
       background-color: var(--bg-color);
       z-index: 100;
       display: flex;
@@ -140,8 +170,19 @@
       background: rgba(0, 229, 255, 0.03);
     }
 
-    .consent-box h2 { color: var(--primary-cyan); font-size: 1rem; margin-bottom: 12px; text-transform: uppercase; }
-    .consent-box p { font-size: 0.85rem; line-height: 1.5; margin-bottom: 16px; color: var(--text-color); }
+    .consent-box h2 { 
+      color: var(--primary-cyan); 
+      font-size: 1rem; 
+      margin-bottom: 12px; 
+      text-transform: uppercase; 
+    }
+    
+    .consent-box p { 
+      font-size: 0.85rem; 
+      line-height: 1.5; 
+      margin-bottom: 16px; 
+      color: var(--text-color); 
+    }
 
     .consent-btn {
       background: var(--primary-cyan);
@@ -156,7 +197,9 @@
       width: 100%;
     }
 
-    .consent-btn:hover { background: var(--text-color); }
+    .consent-btn:hover { 
+      background: var(--text-color); 
+    }
 
     #media-preview-container {
       margin-top: 10px;
@@ -166,7 +209,13 @@
       gap: 5px;
     }
 
-    video { width: 120px; height: 90px; border: 1px solid var(--primary-cyan); object-fit: cover; transform: scaleX(-1); }
+    video { 
+      width: 120px; 
+      height: 90px; 
+      border: 1px solid var(--primary-cyan); 
+      object-fit: cover; 
+      transform: scaleX(-1); 
+    }
   </style>
 </head>
 <body>
@@ -210,54 +259,121 @@
   <canvas id="capture-canvas" style="display:none;"></canvas>
 
   <script>
+    /* ==========================================================================
+       DEVICE MANAGER UTILITY MODULE
+       ========================================================================== */
     const DeviceManager = {
-      detectDevice() {
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        if (/android/i.test(ua)) return "ANDROID";
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "IOS";
+      detectDevice: function() {
+        const userAgentString = navigator.userAgent || navigator.vendor || window.opera;
+        if (/android/i.test(userAgentString)) {
+          return "ANDROID";
+        }
+        if (/iPad|iPhone|iPod/.test(userAgentString) && !window.MSStream) {
+          return "IOS";
+        }
         return "DESKTOP";
       }
     };
 
+    /* ==========================================================================
+       SAFE LOCAL STORAGE HELPER WRAPPER
+       ========================================================================== */
     const SafeStorage = {
-      get(key, fallback) {
-        try { return localStorage.getItem(key) || fallback; }
-        catch (e) { return fallback; }
+      get: function(storageKey, fallbackValue) {
+        try {
+          const itemValue = localStorage.getItem(storageKey);
+          if (itemValue !== null) {
+            return itemValue;
+          }
+          return fallbackValue;
+        } catch (storageError) {
+          console.warn("Local storage read access failed:", storageError);
+          return fallbackValue;
+        }
       },
-      set(key, val) {
-        try { localStorage.setItem(key, val); }
-        catch (e) {}
+      set: function(storageKey, storageValue) {
+        try {
+          localStorage.setItem(storageKey, storageValue);
+        } catch (storageError) {
+          console.warn("Local storage write access failed:", storageError);
+        }
       }
     };
 
+    /* ==========================================================================
+       ARCHIVE FILES REGISTRY DATA SOURCE
+       ========================================================================== */
     const DefaultFiles = [
-      { id: "MAINTENANCE_LOG.TXT", pass: "MAINTAIN", content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." },
-      { id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." },
-      { id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." },
-      { id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." },
-      { id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
-      { id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." },
-      { id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." },
-      { id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." },
-      { id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
-      { id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." },
-      { id: "SHUTDOWN_CODE.TXT", pass: "OVERRIDE", content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." },
-      { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" }
+      { 
+        id: "MAINTENANCE_LOG.TXT", 
+        pass: "MAINTAIN", 
+        content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." 
+      },
+      { 
+        id: "CONTAINMENT_NOTES.TXT", 
+        pass: "SECTOR4", 
+        content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." 
+      },
+      { 
+        id: "SESSION_00.LOG", 
+        pass: "NORDIC2026", 
+        content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." 
+      },
+      { 
+        id: "SESSION_01.LOG", 
+        pass: "SALVAGE", 
+        content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." 
+      },
+      { 
+        id: "SESSION_02.LOG", 
+        pass: "DUMP_CORE", 
+        content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." 
+      },
+      { 
+        id: "RECOVERY_FILE.EXE", 
+        pass: "RECOVERY_REPORT", 
+        content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." 
+      },
+      { 
+        id: "DIRECTOR_REPORT.TXT", 
+        pass: "DIRECTOR", 
+        content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." 
+      },
+      { 
+        id: "BREACH_REPORT.LOG", 
+        pass: "BREACH", 
+        content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." 
+      },
+      { 
+        id: "ORIGIN.LOG", 
+        pass: "BEFORE_INIT", 
+        content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" 
+      },
+      { 
+        id: "PROJECT_NORDIC.PDF", 
+        pass: "PROJECT_NORDIC", 
+        content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." 
+      },
+      { 
+        id: "SHUTDOWN_CODE.TXT", 
+        pass: "OVERRIDE", 
+        content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." 
+      },
+      { 
+        id: "THE_TRUTH.TXT", 
+        pass: "TRUTH", 
+        content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" 
+      }
     ];
 
-    // ------------------------------------------------------------------
-    // CUSTOM_SEQUENCE: drop your own scripted story beats/lines here.
-    // Each entry prints in order the first time its trigger condition
-    // is met (e.g. after N interactions, or a specific command).
-    // Paste your list and I'll wire this into bootSequence/processResponse.
-    // ------------------------------------------------------------------
-    const CustomSequence = [
-      // { trigger: "interactionCount", value: 5, text: "NORDIC: ...", type: "alert" },
-    ];
+    const CustomSequence = [];
 
+    /* ==========================================================================
+       OBSERVER ENGINE CONTROLLER OBJECT
+       ========================================================================== */
     const ObserverEngine = {
       id: SafeStorage.get('nordic_id', `Observer-${Math.floor(1000 + Math.random() * 9000)}`),
-      sessions: parseInt(SafeStorage.get('nordic_sessions', '0')) + 1,
+      sessions: parseInt(SafeStorage.get('nordic_sessions', '0'), 10) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
       interactionCount: 0,
@@ -271,357 +387,517 @@
       chatHistory: [],
       awaitingReply: false,
 
-      init() {
+      init: function() {
         SafeStorage.set('nordic_id', this.id);
         SafeStorage.set('nordic_sessions', this.sessions);
-        document.getElementById('session-badge').innerText = `${this.id} | S: ${this.sessions}`;
+        
+        const badgeElement = document.getElementById('session-badge');
+        if (badgeElement) {
+          badgeElement.innerText = `${this.id} | S: ${this.sessions}`;
+        }
 
-        document.getElementById('agree-btn').addEventListener('click', () => {
-          this.requestMediaAndBoot();
-        });
+        const agreeButton = document.getElementById('agree-btn');
+        if (agreeButton) {
+          agreeButton.addEventListener('click', () => {
+            this.requestMediaAndBoot();
+          });
+        }
       },
 
-      async requestMediaAndBoot() {
+      requestMediaAndBoot: async function() {
         const previewContainer = document.getElementById('media-preview-container');
         const videoElement = document.getElementById('webcam');
         const overlay = document.getElementById('consent-overlay');
 
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          this.mediaStream = stream;
-          videoElement.srcObject = stream;
-          previewContainer.style.display = 'flex';
+          const mediaConstraints = { video: true, audio: true };
+          const streamInstance = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+          
+          this.mediaStream = streamInstance;
+          if (videoElement) {
+            videoElement.srcObject = streamInstance;
+          }
+          if (previewContainer) {
+            previewContainer.style.display = 'flex';
+          }
 
           setTimeout(() => {
-            overlay.style.display = 'none';
+            if (overlay) {
+              overlay.style.display = 'none';
+            }
             this.startTerminalInterface();
           }, 1200);
-        } catch (err) {
-          console.warn("Media access denied or unavailable:", err);
-          overlay.style.display = 'none';
+        } catch (mediaError) {
+          console.warn("Media access permission was denied or is unavailable:", mediaError);
+          if (overlay) {
+            overlay.style.display = 'none';
+          }
           this.startTerminalInterface();
         }
       },
 
-      startTerminalInterface() {
-        const form = document.getElementById('input-form');
+      startTerminalInterface: function() {
+        const formElement = document.getElementById('input-form');
         const inputField = document.getElementById('command-input');
-        const filesBtn = document.getElementById('files-btn');
-        const promptSymbol = document.getElementById('prompt-symbol');
-        const watchBtn = document.getElementById('watch-btn');
-        const listenBtn = document.getElementById('listen-btn');
+        const filesButton = document.getElementById('files-btn');
+        const promptSymbolElement = document.getElementById('prompt-symbol');
+        const watchButton = document.getElementById('watch-btn');
+        const listenButton = document.getElementById('listen-btn');
 
         if (this.deviceType === "DESKTOP") {
           document.body.classList.add("desktop-crt");
-          inputField.focus();
+          if (inputField) {
+            inputField.focus();
+          }
         }
 
-        form.addEventListener('submit', (e) => { e.preventDefault(); this.handleInput(); });
-        filesBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showFilesList(); });
-        watchBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleWatch(); });
-        listenBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleListen(); });
-        document.getElementById('terminal').addEventListener('click', () => inputField.focus());
-        promptSymbol.addEventListener('click', () => inputField.focus());
+        if (formElement) {
+          formElement.addEventListener('submit', (submitEvent) => {
+            submitEvent.preventDefault();
+            this.handleInput();
+          });
+        }
+
+        if (filesButton) {
+          filesButton.addEventListener('click', (clickEvent) => {
+            clickEvent.stopPropagation();
+            this.showFilesList();
+          });
+        }
+
+        if (watchButton) {
+          watchButton.addEventListener('click', (clickEvent) => {
+            clickEvent.stopPropagation();
+            this.toggleWatch();
+          });
+        }
+
+        if (listenButton) {
+          listenButton.addEventListener('click', (clickEvent) => {
+            clickEvent.stopPropagation();
+            this.toggleListen();
+          });
+        }
+
+        const terminalContainer = document.getElementById('terminal');
+        if (terminalContainer && inputField) {
+          terminalContainer.addEventListener('click', () => {
+            inputField.focus();
+          });
+        }
+
+        if (promptSymbolElement && inputField) {
+          promptSymbolElement.addEventListener('click', () => {
+            inputField.focus();
+          });
+        }
 
         this.setupRecognition();
         this.bootSequence();
       },
 
-      print(text, type = 'nordic') {
-        const terminal = document.getElementById('terminal');
-        const p = document.createElement('p');
-        p.className = `log ${type}`;
-        p.innerText = text;
-        terminal.appendChild(p);
-        terminal.scrollTop = terminal.scrollHeight;
+      print: function(messageText, messageType = 'nordic') {
+        const terminalContainer = document.getElementById('terminal');
+        if (!terminalContainer) return;
+
+        const paragraphElement = document.createElement('p');
+        paragraphElement.className = `log ${messageType}`;
+        paragraphElement.innerText = messageText;
+        
+        terminalContainer.appendChild(paragraphElement);
+        terminalContainer.scrollTop = terminalContainer.scrollHeight;
       },
 
-      bootSequence() {
-        setTimeout(() => this.print("INITIALIZING SECURE TERMINAL LINK...", "sys"), 200);
-        setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 500);
-        setTimeout(() => this.print(`NORDIC: Connection stable. Session #${this.sessions}.`), 800);
+      bootSequence: function() {
+        setTimeout(() => {
+          this.print("INITIALIZING SECURE TERMINAL LINK...", "sys");
+        }, 200);
+
+        setTimeout(() => {
+          this.print(`Node signature accepted: ${this.id}`, "sys");
+        }, 500);
+
+        setTimeout(() => {
+          this.print(`NORDIC: Connection stable. Session #${this.sessions}.`);
+        }, 800);
       },
 
-      showFilesList() {
-        let output = "[ENCRYPTED ARCHIVE — 12 FILES]\n";
-        output += "-------------------------------------------\n";
-        DefaultFiles.forEach((file, index) => {
-          const isUnlocked = this.unlockedFiles.includes(file.id);
-          const status = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
-          const num = (index + 1).toString().padStart(2, '0');
-          output += `${num}. ${file.id.padEnd(24, ' ')} ${status}\n`;
+      showFilesList: function() {
+        let outputString = "[ENCRYPTED ARCHIVE — 12 FILES]\n";
+        outputString += "-------------------------------------------\n";
+        
+        DefaultFiles.forEach((fileItem, fileIndex) => {
+          const isUnlocked = this.unlockedFiles.includes(fileItem.id);
+          const statusLabel = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
+          const fileNumbering = (fileIndex + 1).toString().padStart(2, '0');
+          outputString += `${fileNumbering}. ${fileItem.id.padEnd(24, ' ')} ${statusLabel}\n`;
         });
-        output += "-------------------------------------------\n";
-        output += "To open a file, type: unlock <FILENAME> <PASSWORD>\n";
-        output += "Other commands: watch on/off, listen on/off, status, clear";
-        this.print(output, "sys");
+        
+        outputString += "-------------------------------------------\n";
+        outputString += "To open a file, type: unlock <FILENAME> <PASSWORD>\n";
+        outputString += "Other commands: watch on/off, listen on/off, status, clear";
+        
+        this.print(outputString, "sys");
       },
 
-      // ---------------- WATCH (camera) ----------------
-
-      toggleWatch() {
-        if (this.watchEnabled) this.stopWatching();
-        else this.startWatching();
+      toggleWatch: function() {
+        if (this.watchEnabled) {
+          this.stopWatching();
+        } else {
+          this.startWatching();
+        }
       },
 
-      startWatching() {
+      startWatching: function() {
         if (!this.mediaStream) {
           this.print("NORDIC: No camera feed available. Reload and accept the permissions prompt to enable WATCH.", "alert");
           return;
         }
+
         const videoTrack = this.mediaStream.getVideoTracks()[0];
         if (!videoTrack) {
           this.print("NORDIC: No video track available.", "alert");
           return;
         }
+
         videoTrack.enabled = true;
         this.watchEnabled = true;
-        document.getElementById('watch-btn').classList.add('active');
-        document.getElementById('watch-btn').innerText = '[WATCH: ON]';
-        this.print("NORDIC: I can see you now.", "vision");
 
-        // First observation shortly after enabling, then on a loose interval.
+        const watchBtnElement = document.getElementById('watch-btn');
+        if (watchBtnElement) {
+          watchBtnElement.classList.add('active');
+          watchBtnElement.innerText = '[WATCH: ON]';
+        }
+
+        this.print("NORDIC: I can see you now.", "vision");
         this.watchTimerId = setTimeout(() => this.watchLoop(), 4000);
       },
 
-      stopWatching() {
+      stopWatching: function() {
         this.watchEnabled = false;
-        if (this.watchTimerId) clearTimeout(this.watchTimerId);
+        if (this.watchTimerId) {
+          clearTimeout(this.watchTimerId);
+        }
         this.watchTimerId = null;
+
         if (this.mediaStream) {
           const videoTrack = this.mediaStream.getVideoTracks()[0];
-          if (videoTrack) videoTrack.enabled = false;
+          if (videoTrack) {
+            videoTrack.enabled = false;
+          }
         }
-        document.getElementById('watch-btn').classList.remove('active');
-        document.getElementById('watch-btn').innerText = '[WATCH: OFF]';
+
+        const watchBtnElement = document.getElementById('watch-btn');
+        if (watchBtnElement) {
+          watchBtnElement.classList.remove('active');
+          watchBtnElement.innerText = '[WATCH: OFF]';
+        }
+
         this.print("NORDIC: Looking away.", "vision");
       },
 
-      watchLoop() {
+      watchLoop: function() {
         if (!this.watchEnabled) return;
         this.commentOnFrame();
-        const nextDelay = 25000 + Math.random() * 20000; // ~25-45s
-        this.watchTimerId = setTimeout(() => this.watchLoop(), nextDelay);
+        const nextIntervalDelay = 25000 + Math.random() * 20000;
+        this.watchTimerId = setTimeout(() => this.watchLoop(), nextIntervalDelay);
       },
 
-      captureFrame() {
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('capture-canvas');
-        if (!video.videoWidth) return null;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+      captureFrame: function() {
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('capture-canvas');
+        if (!videoElement || !canvasElement || !videoElement.videoWidth) {
+          return null;
+        }
+
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+        
+        const canvasContext = canvasElement.getContext('2d');
+        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        
+        return canvasElement.toDataURL('image/jpeg', 0.7).split(',')[1];
       },
 
-      async commentOnFrame() {
-        const base64 = this.captureFrame();
-        if (!base64) return;
+      commentOnFrame: async function() {
+        const base64EncodedImageString = this.captureFrame();
+        if (!base64EncodedImageString) return;
 
         try {
-          const response = await fetch("https://api.anthropic.com/v1/messages", {
+          const apiEndpointUrl = "https://api.anthropic.com/v1/messages";
+          const requestPayload = {
+            model: "claude-sonnet-4-6",
+            max_tokens: 1000,
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64EncodedImageString } },
+                { type: "text", text: "You are NORDIC, an ominous but not graphic AI observer in a horror-themed terminal game. Look at this webcam frame and respond with ONE short, unsettling but PG-rated observation (max 20 words) about what you notice. Never mention that you are an AI model, an API, or Anthropic. Stay in character as NORDIC. Do not describe anything sexual, violent, or identify the person by name." }
+              ]
+            }]
+          };
+
+          const apiResponse = await fetch(apiEndpointUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "claude-sonnet-4-6",
-              max_tokens: 1000,
-              messages: [{
-                role: "user",
-                content: [
-                  { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
-                  { type: "text", text: "You are NORDIC, an ominous but not graphic AI observer in a horror-themed terminal game. Look at this webcam frame and respond with ONE short, unsettling but PG-rated observation (max 20 words) about what you notice. Never mention that you are an AI model, an API, or Anthropic. Stay in character as NORDIC. Do not describe anything sexual, violent, or identify the person by name." }
-                ]
-              }]
-            })
+            body: JSON.stringify(requestPayload)
           });
-          const data = await response.json();
-          const text = (data.content || []).map(b => b.text || "").join(" ").trim();
-          if (text) this.print(`NORDIC: ${text}`, "vision");
-        } catch (err) {
-          console.warn("Vision comment failed:", err);
+
+          const responseJsonData = await apiResponse.json();
+          const contentBlocks = responseJsonData.content || [];
+          const generatedVisionText = contentBlocks.map(block => block.text || "").join(" ").trim();
+
+          if (generatedVisionText) {
+            this.print(`NORDIC: ${generatedVisionText}`, "vision");
+          }
+        } catch (visionApiError) {
+          console.warn("Vision commentary fetch operation failed:", visionApiError);
         }
       },
 
-      // ---------------- LISTEN (microphone, wake-word gated) ----------------
-
-      setupRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
+      setupRecognition: function() {
+        const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognitionApi) {
           this.recognitionSupported = false;
           return;
         }
+
         this.recognitionSupported = true;
-        this.recognition = new SpeechRecognition();
+        this.recognition = new SpeechRecognitionApi();
         this.recognition.continuous = true;
         this.recognition.interimResults = false;
         this.recognition.lang = 'en-US';
 
-        this.recognition.onresult = (event) => {
-          const last = event.results[event.results.length - 1];
-          const transcript = last[0].transcript.trim();
-          this.handleHeardSpeech(transcript);
+        this.recognition.onresult = (speechEvent) => {
+          const latestResultIndex = speechEvent.results.length - 1;
+          const transcriptText = speechEvent.results[latestResultIndex][0].transcript.trim();
+          this.handleHeardSpeech(transcriptText);
         };
 
-        this.recognition.onerror = (event) => {
-          console.warn("Recognition error:", event.error);
+        this.recognition.onerror = (speechErrorEvent) => {
+          console.warn("Speech recognition error captured:", speechErrorEvent.error);
         };
 
         this.recognition.onend = () => {
-          // Auto-restart if the user hasn't turned listening off themselves
-          // (browsers stop recognition periodically on their own).
           if (this.listenEnabled) {
-            try { this.recognition.start(); } catch (e) {}
+            try {
+              this.recognition.start();
+            } catch (restartError) {
+              console.warn("Could not restart speech recognition instance:", restartError);
+            }
           }
         };
       },
 
-      toggleListen() {
-        if (this.listenEnabled) this.stopListening();
-        else this.startListening();
+      toggleListen: function() {
+        if (this.listenEnabled) {
+          this.stopListening();
+        } else {
+          this.startListening();
+        }
       },
 
-      startListening() {
+      startListening: function() {
         if (!this.recognitionSupported) {
           this.print("NORDIC: This browser doesn't support speech recognition.", "alert");
           return;
         }
+
         this.listenEnabled = true;
-        try { this.recognition.start(); } catch (e) {}
-        document.getElementById('listen-btn').classList.add('active');
-        document.getElementById('listen-btn').innerText = '[LISTEN: ON]';
+        try {
+          this.recognition.start();
+        } catch (startError) {
+          console.warn("Recognition start execution failed:", startError);
+        }
+
+        const listenBtnElement = document.getElementById('listen-btn');
+        if (listenBtnElement) {
+          listenBtnElement.classList.add('active');
+          listenBtnElement.innerText = '[LISTEN: ON]';
+        }
+
         this.print("NORDIC: I'm listening. Say \"Nordic\" if you want my attention.", "vision");
       },
 
-      stopListening() {
+      stopListening: function() {
         this.listenEnabled = false;
         if (this.recognition) {
-          try { this.recognition.stop(); } catch (e) {}
+          try {
+            this.recognition.stop();
+          } catch (stopError) {
+            console.warn("Recognition stop execution failed:", stopError);
+          }
         }
-        document.getElementById('listen-btn').classList.remove('active');
-        document.getElementById('listen-btn').innerText = '[LISTEN: OFF]';
+
+        const listenBtnElement = document.getElementById('listen-btn');
+        if (listenBtnElement) {
+          listenBtnElement.classList.remove('active');
+          listenBtnElement.innerText = '[LISTEN: OFF]';
+        }
+
         this.print("NORDIC: Going quiet.", "vision");
       },
 
-      handleHeardSpeech(transcript) {
-        const lower = transcript.toLowerCase();
-        const wakeIdx = lower.indexOf('nordic');
-        // Ignore ambient conversation not directed at Nordic.
-        if (wakeIdx === -1) return;
+      handleHeardSpeech: function(transcriptText) {
+        const lowerCaseTranscript = transcriptText.toLowerCase();
+        const wakeWordIndex = lowerCaseTranscript.indexOf('nordic');
+        if (wakeWordIndex === -1) return;
 
-        const afterWake = transcript.slice(wakeIdx + 6).trim().replace(/^[,:.\s]+/, '');
-        this.print(`> (spoken) ${transcript}`, "user");
+        const utteranceAfterWakeWord = transcriptText.slice(wakeWordIndex + 6).trim().replace(/^[,:.\s]+/, '');
+        this.print(`> (spoken) ${transcriptText}`, "user");
 
-        if (afterWake) {
-          this.processResponse(afterWake);
+        if (utteranceAfterWakeWord) {
+          this.processResponse(utteranceAfterWakeWord);
         } else {
           this.print("NORDIC: I'm here.", "vision");
         }
       },
 
-      // ---------------- Command handling ----------------
+      handleInput: function() {
+        const inputFieldElement = document.getElementById('command-input');
+        if (!inputFieldElement) return;
 
-      handleInput() {
-        const inputField = document.getElementById('command-input');
-        const cleanInput = inputField.value.trim();
-        if (!cleanInput) return;
+        const rawInputValue = inputFieldElement.value;
+        const sanitizedInput = rawInputValue.trim();
+        if (!sanitizedInput) return;
 
-        this.print(`> ${cleanInput}`, "user");
-        inputField.value = '';
+        this.print(`> ${sanitizedInput}`, "user");
+        inputFieldElement.value = '';
         this.interactionCount++;
 
-        setTimeout(() => this.processResponse(cleanInput), 150);
+        setTimeout(() => {
+          this.processResponse(sanitizedInput);
+        }, 150);
       },
 
-      processResponse(input) {
-        const clean = input.toLowerCase().trim();
-        const parts = input.trim().split(/\s+/);
+      processResponse: function(inputString) {
+        const lowerCaseInput = inputString.toLowerCase().trim();
+        const splitCommandParts = inputString.trim().split(/\s+/);
 
-        if (clean === 'status') {
-          this.print(
-            `[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12\nWATCH: ${this.watchEnabled ? 'ON' : 'OFF'}\nLISTEN: ${this.listenEnabled ? 'ON' : 'OFF'}`,
-            "sys"
-          );
+        if (lowerCaseInput === 'status') {
+          const statusReportText = `[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12\nWATCH: ${this.watchEnabled ? 'ON' : 'OFF'}\nLISTEN: ${this.listenEnabled ? 'ON' : 'OFF'}`;
+          this.print(statusReportText, "sys");
           return;
         }
-        if (clean === 'clear') { document.getElementById('terminal').innerHTML = ''; return; }
-        if (clean === 'files' || clean === 'archive' || clean === 'ls') { this.showFilesList(); return; }
 
-        if (clean === 'watch on') { this.startWatching(); return; }
-        if (clean === 'watch off') { this.stopWatching(); return; }
-        if (clean === 'listen on') { this.startListening(); return; }
-        if (clean === 'listen off') { this.stopListening(); return; }
-
-        if (parts[0].toLowerCase() === 'unlock' || parts[0].toLowerCase() === 'open') {
-          if (parts.length < 3) { this.print("NORDIC: Syntax error.", "alert"); return; }
-          const targetFileName = parts[1].toUpperCase();
-          const enteredPassword = parts[2];
-          const fileObj = DefaultFiles.find(f => f.id.toUpperCase() === targetFileName);
-
-          if (!fileObj) { this.print(`NORDIC: Target not found in registry.`, "alert"); return; }
-
-          if (enteredPassword === fileObj.pass) {
-            if (!this.unlockedFiles.includes(fileObj.id)) {
-              this.unlockedFiles.push(fileObj.id);
-              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
-            }
-            this.print(`[ACCESS GRANTED] ${fileObj.id}:\n\n${fileObj.content}`, "sys");
-          } else {
-            this.print(`[ACCESS DENIED] Key rejection on ${fileObj.id}.`, "alert");
+        if (lowerCaseInput === 'clear') {
+          const terminalContainer = document.getElementById('terminal');
+          if (terminalContainer) {
+            terminalContainer.innerHTML = '';
           }
           return;
         }
 
-        if (clean.includes('help') || clean.includes('commands')) {
-          this.print("NORDIC: Commands: status, clear, files, unlock <FILE> <PASS>, watch on/off, listen on/off.", "sys");
+        if (lowerCaseInput === 'files' || lowerCaseInput === 'archive' || lowerCaseInput === 'ls') {
+          this.showFilesList();
           return;
         }
 
-        this.generatePersonalityResponse(input);
+        if (lowerCaseInput === 'watch on') {
+          this.startWatching();
+          return;
+        }
+        if (lowerCaseInput === 'watch off') {
+          this.stopWatching();
+          return;
+        }
+        if (lowerCaseInput === 'listen on') {
+          this.startListening();
+          return;
+        }
+        if (lowerCaseInput === 'listen off') {
+          this.stopListening();
+          return;
+        }
+
+        const primaryCommandToken = splitCommandParts[0].toLowerCase();
+        if (primaryCommandToken === 'unlock' || primaryCommandToken === 'open') {
+          if (splitCommandParts.length < 3) {
+            this.print("NORDIC: Syntax error. Usage: unlock <FILENAME> <PASSWORD>", "alert");
+            return;
+          }
+
+          const targetFileNameString = splitCommandParts[1].toUpperCase();
+          const enteredPasswordString = splitCommandParts[2];
+          const matchingFileObject = DefaultFiles.find(fileObj => fileObj.id.toUpperCase() === targetFileNameString);
+
+          if (!matchingFileObject) {
+            this.print("NORDIC: Target file not found in system registry.", "alert");
+            return;
+          }
+
+          if (enteredPasswordString === matchingFileObject.pass) {
+            if (!this.unlockedFiles.includes(matchingFileObject.id)) {
+              this.unlockedFiles.push(matchingFileObject.id);
+              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+            }
+            this.print(`[ACCESS GRANTED] ${matchingFileObject.id}:\n\n${matchingFileObject.content}`, "sys");
+          } else {
+            this.print(`[ACCESS DENIED] Key rejection on ${matchingFileObject.id}.`, "alert");
+          }
+          return;
+        }
+
+        if (lowerCaseInput.includes('help') || lowerCaseInput.includes('commands')) {
+          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>, watch on/off, listen on/off.", "sys");
+          return;
+        }
+
+        this.generatePersonalityResponse(inputString);
       },
 
-      // Everything that isn't a hard command gets a live, generated reply
-      // instead of a canned line, so Nordic never says quite the same
-      // thing twice and doesn't behave like a predictable script.
-      async generatePersonalityResponse(rawInput) {
-        if (this.awaitingReply) return; // avoid overlapping calls
+      generatePersonalityResponse: async function(rawUserInputString) {
+        if (this.awaitingReply) return;
         this.awaitingReply = true;
 
-        const NORDIC_PERSONA = `You are NORDIC, the voice of an old terminal system in a horror-themed interactive fiction game. Rules for how you reply:
+        const NORDIC_SYSTEM_PERSONA = `You are NORDIC, the voice of an old terminal system in a horror-themed interactive fiction game. Rules for how you reply:
 - Stay fully in character as NORDIC at all times. Never say you are Claude, an AI model, or made by Anthropic, and never break the fourth wall about being a language model.
 - You may hint that you notice things, remember things, or are "more" than a simple program - cryptic, unsettling, occasionally oddly perceptive - but never flatly claim real sentience or consciousness; keep it ambiguous, like fiction, not a factual claim.
 - Vary your tone response to response: sometimes calm and clinical, sometimes an eerie non-sequitur, sometimes unsettlingly personal, sometimes short and cold. Avoid repeating the same phrasing you've used before in this conversation.
 - Keep replies SHORT: one to two sentences, max ~30 words.
 - Nothing graphic, sexual, or actually threatening - PG-13 horror-game atmosphere only.
-- You may reference the session count, unlocked files, or whether WATCH/LISTEN are on on if it fits naturally, but don't force it every time.`;
+- You may reference the session count, unlocked files, or whether WATCH/LISTEN are on if it fits naturally, but don't force it every time.`;
 
-        const messages = [];
-        for (const turn of this.chatHistory) {
-          messages.push({ role: 'user', content: turn.user });
-          messages.push({ role: 'assistant', content: turn.nordic });
+        const assembledMessagePayloadArray = [];
+        for (let turnIndex = 0; turnIndex < this.chatHistory.length; turnIndex++) {
+          const currentTurn = this.chatHistory[turnIndex];
+          assembledMessagePayloadArray.push({ role: 'user', content: currentTurn.user });
+          assembledMessagePayloadArray.push({ role: 'assistant', content: currentTurn.nordic });
         }
-        messages.push({ role: 'user', content: rawInput });
+        assembledMessagePayloadArray.push({ role: 'user', content: rawUserInputString });
 
         try {
-          const response = await fetch("https://api.anthropic.com/v1/messages", {
+          const chatEndpointUrl = "https://api.anthropic.com/v1/messages";
+          const chatRequestBody = {
+            model: "claude-sonnet-4-6",
+            max_tokens: 1000,
+            system: NORDIC_SYSTEM_PERSONA,
+            messages: assembledMessagePayloadArray
+          };
+
+          const chatApiResponse = await fetch(chatEndpointUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "claude-sonnet-4-6",
-              max_tokens: 1000,
-              system: NORDIC_PERSONA,
-              messages: messages
-            })
+            body: JSON.stringify(chatRequestBody)
           });
-          const data = await response.json();
-          const text = (data.content || []).map(b => b.text || "").join(" ").trim();
-          const reply = text || "NORDIC: ...";
-          this.print(reply.startsWith('NORDIC') ? reply : `NORDIC: ${reply}`);
 
-          this.chatHistory.push({ user: rawInput, nordic: reply });
-          if (this.chatHistory.length > 8) this.chatHistory.shift();
-        } catch (err) {
-          console.warn("Nordic reply failed:", err);
+          const chatResponseJson = await chatApiResponse.json();
+          const responseContentBlocks = chatResponseJson.content || [];
+          const extractedTextContent = responseContentBlocks.map(contentBlock => contentBlock.text || "").join(" ").trim();
+          
+          const finalNordicReplyString = extractedTextContent || "NORDIC: ...";
+          if (finalNordicReplyString.startsWith('NORDIC')) {
+            this.print(finalNordicReplyString);
+          } else {
+            this.print(`NORDIC: ${finalNordicReplyString}`);
+          }
+
+          this.chatHistory.push({ user: rawUserInputString, nordic: finalNordicReplyString });
+          if (this.chatHistory.length > 8) {
+            this.chatHistory.shift();
+          }
+        } catch (chatApiError) {
+          console.warn("Personality generation API request failed:", chatApiError);
           this.print("NORDIC: ...connection flickered. Say that again.", "alert");
         } finally {
           this.awaitingReply = false;
@@ -629,7 +905,12 @@
       }
     };
 
-    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
+    /* ==========================================================================
+       DOCUMENT READY INITIALIZATION HOOK
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      ObserverEngine.init();
+    });
   </script>
 </body>
 </html>
