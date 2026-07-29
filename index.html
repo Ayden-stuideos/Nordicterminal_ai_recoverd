@@ -15,7 +15,6 @@
       --font-stack: "Courier New", Courier, monospace;
     }
 
-    /* CSS Reset and Box Sizing Declarations */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -37,7 +36,6 @@
       border: 2px solid var(--deep-cyan);
     }
 
-    /* CRT Scanline Overlay Styling */
     body.desktop-crt::before {
       content: " ";
       display: block;
@@ -53,7 +51,6 @@
       opacity: 0.5;
     }
 
-    /* Terminal Header Bar Layout */
     header {
       border-bottom: 1px solid var(--secondary-grey);
       padding-bottom: 6px;
@@ -91,7 +88,6 @@
       color: var(--bg-color); 
     }
 
-    /* Scrollable Terminal Output Window */
     #terminal {
       flex: 1;
       overflow-y: auto;
@@ -116,7 +112,6 @@
     p.user { color: var(--primary-cyan); }
     p.vision { color: #B388FF; font-style: italic; }
 
-    /* Command Line Input Wrapper */
     #input-form {
       display: flex;
       align-items: center;
@@ -145,7 +140,6 @@
       border-radius: 0;
     }
 
-    /* Initial Permission Modal Overlay */
     #consent-overlay {
       position: absolute;
       top: 0; 
