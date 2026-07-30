@@ -920,7 +920,7 @@
 
           if (chatResponseJson.error) {
             console.warn("Chat API returned an error:", chatResponseJson.error);
-            this.print("NORDIC: ...signal is corrupted. Try again.", "alert");
+            this.print("NORDIC: ERROR - " + JSON.stringify(chatResponseJson.error), "alert");
             return;
           }
 
