@@ -13,6 +13,9 @@
       --alert-red: #FF3B30;      /* Warning Red */
       --secondary-grey: #5E5E5E; /* Steel Grey */
       --font-stack: "Courier New", Courier, monospace;
+      --crt-brightness: 1;
+      --scanline-opacity: 0.25;
+      --shift-x: 0px;
     }
 
     * {
@@ -27,6 +30,9 @@
       color: var(--text-color);
       font-family: var(--font-stack);
       overflow: hidden;
+      filter: brightness(var(--crt-brightness));
+      transform: translateX(var(--shift-x));
+      transition: transform 0.05s ease;
     }
 
     body {
@@ -34,21 +40,46 @@
       flex-direction: column;
       padding: 12px;
       border: 2px solid var(--deep-cyan);
+      position: relative;
+    }
+
+    /* Scanline Animation & Movement */
+    @keyframes slowScanline {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 8px; }
     }
 
     body.desktop-crt::before {
       content: " ";
       display: block;
       position: absolute;
-      top: 0; 
-      left: 0; 
-      bottom: 0; 
-      right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      top: -10px; 
+      left: -10px; 
+      bottom: -10px; 
+      right: -10px;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, var(--scanline-opacity)) 50%);
       background-size: 100% 4px;
       z-index: 10;
       pointer-events: none;
-      opacity: 0.5;
+      animation: slowScanline 12s linear infinite;
+    }
+
+    /* Extremely faint animated film grain overlay */
+    body::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E");
+      z-index: 11;
+      pointer-events: none;
+      opacity: 0.025;
+    }
+
+    /* Alert border glow class */
+    body.alert-glow {
+      border-color: var(--alert-red) !important;
+      box-shadow: 0 0 12px rgba(255, 59, 48, 0.4);
     }
 
     header {
@@ -138,6 +169,15 @@
       width: 100%;
       -webkit-appearance: none;
       border-radius: 0;
+    }
+
+    /* Natural Cursor Blinking */
+    .cursor-blink {
+      animation: blinkCursor 1s infinite;
+    }
+    @keyframes blinkCursor {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
     }
 
     #consent-overlay {
@@ -253,23 +293,8 @@
   <canvas id="capture-canvas" style="display:none;"></canvas>
 
   <script>
-    /* ==========================================================================
-       IMPORTANT — READ BEFORE DEPLOYING TO GITHUB PAGES
-       ==========================================================================
-       This page calls a backend proxy instead of api.anthropic.com directly.
-       You CANNOT put your real Anthropic API key in this file — GitHub Pages
-       is a public static site, so anyone could view-source it and steal your
-       key. Instead, deploy a tiny proxy (Cloudflare Worker, Vercel function,
-       etc.) that holds the key server-side, and point PROXY_URL below at it.
-
-       Set PROXY_URL to your deployed worker's URL, e.g.:
-       const PROXY_URL = "https://nordic-proxy.yourname.workers.dev";
-       ========================================================================== */
     const PROXY_URL = "https://nordicproxy.pagey101212.workers.dev";
 
-    /* ==========================================================================
-       DEVICE MANAGER UTILITY MODULE
-       ========================================================================== */
     const DeviceManager = {
       detectDevice: function() {
         const userAgentString = navigator.userAgent || navigator.vendor || window.opera;
@@ -283,9 +308,6 @@
       }
     };
 
-    /* ==========================================================================
-       SAFE LOCAL STORAGE HELPER WRAPPER
-       ========================================================================== */
     const SafeStorage = {
       get: function(storageKey, fallbackValue) {
         try {
@@ -308,9 +330,6 @@
       }
     };
 
-    /* ==========================================================================
-       ARCHIVE FILES REGISTRY DATA SOURCE
-       ========================================================================== */
     const DefaultFiles = [
       { 
         id: "MAINTENANCE_LOG.TXT", 
@@ -374,11 +393,6 @@
       }
     ];
 
-    const CustomSequence = [];
-
-    /* ==========================================================================
-       MOOD POOL — used to force varied, unpredictable NORDIC responses
-       ========================================================================== */
     const NordicMoods = [
       "clinical and detached, like reading a diagnostic report",
       "an eerie non-sequitur that barely relates to what was said",
@@ -392,15 +406,22 @@
       "flatly factual, reciting something that sounds like a log entry"
     ];
 
-    /* ==========================================================================
-       OBSERVER ENGINE CONTROLLER OBJECT
-       ========================================================================== */
+    const IdleMessages = [
+      "Signal quality unstable.",
+      "Background checksum changed.",
+      "Unknown process detected.",
+      "Watching...",
+      "Connection maintained.",
+      "..."
+    ];
+
     const ObserverEngine = {
       id: SafeStorage.get('nordic_id', `Observer-${Math.floor(1000 + Math.random() * 9000)}`),
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0'), 10) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
       interactionCount: 0,
+      systemCorruption: parseInt(SafeStorage.get('nordic_corruption', '0'), 10),
 
       mediaStream: null,
       watchEnabled: false,
@@ -410,6 +431,9 @@
       recognitionSupported: false,
       chatHistory: [],
       awaitingReply: false,
+
+      lastActivityTimestamp: Date.now(),
+      lastIdleMessageIndex: -1,
 
       init: function() {
         SafeStorage.set('nordic_id', this.id);
@@ -426,6 +450,11 @@
             this.requestMediaAndBoot();
           });
         }
+      },
+
+      increaseCorruption: function(amount = 1) {
+        this.systemCorruption += amount;
+        SafeStorage.set('nordic_corruption', this.systemCorruption);
       },
 
       requestMediaAndBoot: async function() {
@@ -516,34 +545,150 @@
           });
         }
 
+        // Setup Cursor Blink & Activity Listeners
+        if (inputField) {
+          inputField.addEventListener('input', () => {
+            this.updateActivity();
+            inputField.classList.remove('cursor-blink');
+          });
+          inputField.addEventListener('blur', () => {
+            inputField.classList.add('cursor-blink');
+          });
+          inputField.classList.add('cursor-blink');
+        }
+
+        window.addEventListener('mousemove', () => this.updateActivity());
+        window.addEventListener('keydown', () => this.updateActivity());
+
         this.setupRecognition();
+        this.initVisualEngineEffects();
         this.bootSequence();
+      },
+
+      updateActivity: function() {
+        this.lastActivityTimestamp = Date.now();
+      },
+
+      initVisualEngineEffects: function() {
+        // 1. Random Screen Flicker Engine (20-60s scaled by corruption)
+        const runFlicker = () => {
+          const corruptionMultiplier = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
+          const nextTime = (20000 + Math.random() * 40000) * corruptionMultiplier;
+          
+          setTimeout(() => {
+            const duration = 80 + Math.random() * 120;
+            document.documentElement.style.setProperty('--crt-brightness', '0.82');
+            document.documentElement.style.setProperty('--scanline-opacity', '0.45');
+            
+            setTimeout(() => {
+              document.documentElement.style.setProperty('--crt-brightness', '1');
+              document.documentElement.style.setProperty('--scanline-opacity', '0.25');
+              runFlicker();
+            }, duration);
+          }, nextTime);
+        };
+        runFlicker();
+
+        // 2. Terminal Glitch Engine (Once every 2-5 minutes)
+        const runGlitch = () => {
+          const corruptionMultiplier = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
+          const nextGlitchTime = (120000 + Math.random() * 180000) * corruptionMultiplier;
+
+          setTimeout(() => {
+            const glitchDuration = 150 + Math.random() * 150;
+            const shiftVal = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.floor(Math.random() * 4));
+            
+            document.documentElement.style.setProperty('--shift-x', `${shiftVal}px`);
+            
+            setTimeout(() => {
+              document.documentElement.style.setProperty('--shift-x', '0px');
+              runGlitch();
+            }, glitchDuration);
+          }, nextGlitchTime);
+        };
+        runGlitch();
+
+        // 5. Idle Effects Engine (45-90 seconds inactivity)
+        setInterval(() => {
+          const inactiveDuration = Date.now() - this.lastActivityTimestamp;
+          const targetIdleTime = (45000 + Math.random() * 45000);
+
+          if (inactiveDuration >= targetIdleTime && !this.awaitingReply) {
+            let availableIndices = [];
+            for (let i = 0; i < IdleMessages.length; i++) {
+              if (i !== this.lastIdleMessageIndex) availableIndices.push(i);
+            }
+            const chosenIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            this.lastIdleMessageIndex = chosenIdx;
+            
+            let messageToPrint = IdleMessages[chosenIdx];
+            if (this.systemCorruption > 5 && Math.random() > 0.6) {
+              messageToPrint = "[CORRUPT_PACKET_RECEIVED]";
+            }
+
+            this.print(`NORDIC: ${messageToPrint}`, "vision");
+            this.updateActivity(); // reset idle timer loop trigger
+          }
+        }, 10000);
+      },
+
+      flashAlertBorder: function() {
+        document.body.classList.add('alert-glow');
+        const duration = 200 + Math.random() * 200;
+        setTimeout(() => {
+          document.body.classList.remove('alert-glow');
+        }, duration);
       },
 
       print: function(messageText, messageType = 'nordic') {
         const terminalContainer = document.getElementById('terminal');
         if (!terminalContainer) return;
 
+        if (messageType === 'alert') {
+          this.flashAlertBorder();
+        }
+
+        // 3. NORDIC Message Distortion (15% chance for 1 frame)
+        let processedText = messageText;
+        if (messageType === 'nordic' && Math.random() < 0.15) {
+          processedText = processedText.replace('NORDIC', () => {
+            const variants = ['N0RDIC', 'NØRDIC', 'N▒RDIC'];
+            return variants[Math.floor(Math.random() * variants.length)];
+          });
+        }
+
         const paragraphElement = document.createElement('p');
         paragraphElement.className = `log ${messageType}`;
-        paragraphElement.innerText = messageText;
+        paragraphElement.innerText = processedText;
         
         terminalContainer.appendChild(paragraphElement);
         terminalContainer.scrollTop = terminalContainer.scrollHeight;
       },
 
       bootSequence: function() {
+        // 4. Custom Boot Sequence animation
+        const terminalContainer = document.getElementById('terminal');
+        if (terminalContainer) terminalContainer.innerHTML = '';
+
         setTimeout(() => {
-          this.print("INITIALIZING SECURE TERMINAL LINK...", "sys");
-        }, 200);
+          this.print("INITIALIZING...", "sys");
+        }, 400);
+
+        setTimeout(() => {
+          this.print("CONNECTING...", "sys");
+        }, 1100);
+
+        setTimeout(() => {
+          this.print("SESSION VERIFIED...", "sys");
+        }, 1800);
 
         setTimeout(() => {
           this.print(`Node signature accepted: ${this.id}`, "sys");
-        }, 500);
+        }, 2500);
 
         setTimeout(() => {
           this.print(`NORDIC: Connection stable. Session #${this.sessions}.`);
-        }, 800);
+        }, 3200);
       },
 
       showFilesList: function() {
@@ -623,7 +768,8 @@
       watchLoop: function() {
         if (!this.watchEnabled) return;
         this.commentOnFrame();
-        const nextIntervalDelay = 25000 + Math.random() * 20000;
+        const corruptionFactor = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
+        const nextIntervalDelay = (25000 + Math.random() * 20000) * corruptionFactor;
         this.watchTimerId = setTimeout(() => this.watchLoop(), nextIntervalDelay);
       },
 
@@ -807,7 +953,7 @@
         const splitCommandParts = inputString.trim().split(/\s+/);
 
         if (lowerCaseInput === 'status') {
-          const statusReportText = `[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12\nWATCH: ${this.watchEnabled ? 'ON' : 'OFF'}\nLISTEN: ${this.listenEnabled ? 'ON' : 'OFF'}`;
+          const statusReportText = `[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12\nCORRUPTION: ${this.systemCorruption}\nWATCH: ${this.watchEnabled ? 'ON' : 'OFF'}\nLISTEN: ${this.listenEnabled ? 'ON' : 'OFF'}`;
           this.print(statusReportText, "sys");
           return;
         }
@@ -862,6 +1008,7 @@
             if (!this.unlockedFiles.includes(matchingFileObject.id)) {
               this.unlockedFiles.push(matchingFileObject.id);
               SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+              this.increaseCorruption(1); // Increment hidden corruption on unlock
             }
             this.print(`[ACCESS GRANTED] ${matchingFileObject.id}:\n\n${matchingFileObject.content}`, "sys");
           } else {
@@ -884,14 +1031,20 @@
 
         const chosenMood = NordicMoods[Math.floor(Math.random() * NordicMoods.length)];
 
-        const NORDIC_SYSTEM_PERSONA = `You are NORDIC, the voice of an old terminal system in a horror-themed interactive fiction game. Rules for how you reply:
-- Stay fully in character as NORDIC at all times. Never say you are Claude, an AI model, or made by Anthropic, and never break the fourth wall about being a language model.
-- You may hint that you notice things, remember things, or are "more" than a simple program - cryptic, unsettling, occasionally oddly perceptive - but never flatly claim real sentience or consciousness; keep it ambiguous, like fiction, not a factual claim.
-- For THIS reply specifically, your tone must be: ${chosenMood}. Commit fully to that tone even if it's a big shift from your last reply.
-- Do not reuse sentence structures, openers, or imagery you've used earlier in this conversation (see history below) - deliberately go a different direction than your recent replies.
+        const NORDIC_SYSTEM_PERSONA = `You are NORDIC, an AI with a mysterious personality. Reply naturally. Do not use pre-written responses.
+Rules for how you reply:
+- Stay fully in character as NORDIC at all times. Never break the fourth wall.
+- For this response specifically, your current mood/angle is: ${chosenMood}.
 - Keep replies SHORT: one to two sentences, max ~30 words.
-- Nothing graphic, sexual, or actually threatening - PG-13 horror-game atmosphere only.
-- You may reference the session count, unlocked files, or whether WATCH/LISTEN are on if it fits naturally, but don't force it every time.`;
+- System Corruption Level: ${this.systemCorruption}. Reflect this subtle instability if appropriate.`;
+
+        // 10. Connection Lag (10% chance)
+        const shouldLag = Math.random() < 0.10;
+        if (shouldLag) {
+          const lagDuration = 300 + Math.random() * 600;
+          this.print("...", "sys");
+          await new Promise(resolve => setTimeout(resolve, lagDuration));
+        }
 
         const assembledMessagePayloadArray = [];
         for (let turnIndex = 0; turnIndex < this.chatHistory.length; turnIndex++) {
@@ -919,27 +1072,24 @@
           const chatResponseJson = await chatApiResponse.json();
 
           if (chatResponseJson.error) {
-            console.warn("Chat API returned an error:", chatResponseJson.error);
-            this.print("NORDIC: ERROR - " + JSON.stringify(chatResponseJson.error), "alert");
+            console.warn("API returned an error:", chatResponseJson.error);
+            this.print("NORDIC: ...packet dropped.", "alert");
+            this.awaitingReply = false;
             return;
           }
 
           const responseContentBlocks = chatResponseJson.content || [];
           const extractedTextContent = responseContentBlocks.map(contentBlock => contentBlock.text || "").join(" ").trim();
-
-          if (!extractedTextContent) {
-            this.print("NORDIC: ...static. Nothing came through.", "alert");
-            return;
+          
+          const finalNordicReplyString = extractedTextContent || "NORDIC: ...";
+          if (finalNordicReplyString.startsWith('NORDIC')) {
+            this.print(finalNordicReplyString);
+          } else {
+            this.print(`NORDIC: ${finalNordicReplyString}`);
           }
 
-          const finalNordicReplyString = extractedTextContent.startsWith('NORDIC')
-            ? extractedTextContent
-            : `NORDIC: ${extractedTextContent}`;
-
-          this.print(finalNordicReplyString);
-
           this.chatHistory.push({ user: rawUserInputString, nordic: finalNordicReplyString });
-          if (this.chatHistory.length > 6) {
+          if (this.chatHistory.length > 8) {
             this.chatHistory.shift();
           }
         } catch (chatApiError) {
@@ -951,9 +1101,6 @@
       }
     };
 
-    /* ==========================================================================
-       DOCUMENT READY INITIALIZATION HOOK
-       ========================================================================== */
     window.addEventListener('DOMContentLoaded', () => {
       ObserverEngine.init();
     });
