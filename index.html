@@ -277,19 +277,19 @@
     }
 
     .nordic-triangle-logo {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
       animation: logoPulse 2.5s ease-in-out infinite;
     }
 
     @keyframes logoPulse {
-      0%, 100% { filter: drop-shadow(0 0 6px rgba(0,229,255,0.3)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 14px rgba(0,229,255,0.75)); transform: scale(1.04); }
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(255,59,48,0.4)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 16px rgba(255,59,48,0.85)); transform: scale(1.04); }
     }
 
     .loading-status-line {
       font-size: 0.75rem;
-      color: var(--deep-cyan);
+      color: var(--alert-red);
       text-transform: uppercase;
       letter-spacing: 2px;
       text-align: center;
@@ -298,16 +298,16 @@
     .progress-bar-border {
       width: 100%;
       height: 12px;
-      border: 1px solid var(--primary-cyan);
+      border: 1px solid var(--alert-red);
       padding: 2px;
-      background: rgba(0, 229, 255, 0.02);
+      background: rgba(255, 59, 48, 0.02);
     }
 
     .progress-bar-fill {
       height: 100%;
       width: 0%;
-      background-color: var(--primary-cyan);
-      box-shadow: 0 0 8px var(--primary-cyan);
+      background-color: var(--alert-red);
+      box-shadow: 0 0 8px var(--alert-red);
       transition: width 0.05s linear;
     }
 
@@ -323,9 +323,16 @@
   <div id="loading-screen">
     <div class="loading-content">
       <svg class="nordic-triangle-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,15 15,80 50,55" fill="#00E5FF" opacity="0.9" />
-        <polygon points="85,80 50,55 50,95" fill="#0099CC" opacity="0.9" />
-        <polygon points="15,80 50,55 85,80" fill="#E2F8FF" opacity="0.25" />
+        <polygon points="50,5 5,90 95,90" fill="none" stroke="#FF3B30" stroke-width="5" />
+        <polygon points="50,47 27,90 73,90" fill="none" stroke="#FF3B30" stroke-width="4" />
+        <polygon points="50,47 73,90 27,90" fill="none" stroke="transparent" />
+        <polygon points="50,47 27,90 73,90" fill="none" stroke="transparent" />
+        <polygon points="50,47 27,90 73,90" fill="none" stroke="transparent" />
+        <line x1="50" y1="5" x2="50" y2="47" stroke="#FF3B30" stroke-width="4" />
+        <line x1="50" y1="47" x2="27" y2="90" stroke="#FF3B30" stroke-width="4" />
+        <line x1="50" y1="47" x2="73" y2="90" stroke="#FF3B30" stroke-width="4" />
+        <line x1="27" y1="90" x2="73" y2="90" stroke="#FF3B30" stroke-width="4" />
+        <polygon points="50,47 27,90 73,90" fill="rgba(255,59,48,0.12)" />
       </svg>
 
       <div id="loading-text" class="loading-status-line">NORDIC // INITIALIZING KERNEL...</div>
@@ -535,7 +542,7 @@
           });
         }
 
-        // Run the custom loading boot sequence set to exactly 7 seconds (7000ms)
+        // Run the custom loading boot sequence set to exactly 7 seconds (7000ms) with red logo
         this.runLoadingSequence();
       },
 
@@ -553,7 +560,7 @@
         ];
 
         let currentProgress = 0;
-        // Total duration = 7000ms. If we run every 50ms, that's 140 ticks. 140 * 50ms = 7000ms (7 seconds).
+        // Total duration = 7000ms (7 seconds).
         const totalDuration = 7000;
         const intervalTime = 50;
         const incrementPerTick = 100 / (totalDuration / intervalTime);
