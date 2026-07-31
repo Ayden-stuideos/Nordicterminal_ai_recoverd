@@ -6,12 +6,12 @@
   <title>PROJECT // NORDIC — SECURE TERMINAL (VERBOSE BUILD)</title>
   <style>
     :root {
-      --bg-color: #0F172A;       /* Midnight Navy */
-      --text-color: #E2F8FF;     /* Frost White */
-      --primary-cyan: #00E5FF;   /* Ice Blue */
-      --deep-cyan: #0099CC;      /* Deep Cyan */
-      --alert-red: #FF3B30;      /* Warning Red */
-      --secondary-grey: #5E5E5E; /* Steel Grey */
+      --bg-color: #0F172A;
+      --text-color: #E2F8FF;
+      --primary-cyan: #00E5FF;
+      --deep-cyan: #0099CC;
+      --alert-red: #FF3B30;
+      --secondary-grey: #5E5E5E;
       --font-stack: "Courier New", Courier, monospace;
       --crt-brightness: 1;
       --scanline-opacity: 0.25;
@@ -52,10 +52,7 @@
       content: " ";
       display: block;
       position: absolute;
-      top: -10px; 
-      left: -10px; 
-      bottom: -10px; 
-      right: -10px;
+      top: -10px; left: -10px; bottom: -10px; right: -10px;
       background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, var(--scanline-opacity)) 50%);
       background-size: 100% 4px;
       z-index: 10;
@@ -178,10 +175,7 @@
 
     #consent-overlay {
       position: absolute;
-      top: 0; 
-      left: 0; 
-      right: 0; 
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background-color: var(--bg-color);
       z-index: 100;
       display: flex;
@@ -415,66 +409,18 @@
     };
 
     const DefaultFiles = [
-      { 
-        id: "MAINTENANCE_LOG.TXT", 
-        pass: "MAINTAIN", 
-        content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." 
-      },
-      { 
-        id: "CONTAINMENT_NOTES.TXT", 
-        pass: "SECTOR4", 
-        content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." 
-      },
-      { 
-        id: "SESSION_00.LOG", 
-        pass: "NORDIC2026", 
-        content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." 
-      },
-      { 
-        id: "SESSION_01.LOG", 
-        pass: "SALVAGE", 
-        content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." 
-      },
-      { 
-        id: "SESSION_02.LOG", 
-        pass: "DUMP_CORE", 
-        content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." 
-      },
-      { 
-        id: "RECOVERY_FILE.EXE", 
-        pass: "RECOVERY_REPORT", 
-        content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." 
-      },
-      { 
-        id: "DIRECTOR_REPORT.TXT", 
-        pass: "DIRECTOR", 
-        content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." 
-      },
-      { 
-        id: "BREACH_REPORT.LOG", 
-        pass: "BREACH", 
-        content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." 
-      },
-      { 
-        id: "ORIGIN.LOG", 
-        pass: "BEFORE_INIT", 
-        content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" 
-      },
-      { 
-        id: "PROJECT_NORDIC.PDF", 
-        pass: "PROJECT_NORDIC", 
-        content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." 
-      },
-      { 
-        id: "SHUTDOWN_CODE.TXT", 
-        pass: "OVERRIDE", 
-        content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." 
-      },
-      { 
-        id: "THE_TRUTH.TXT", 
-        pass: "TRUTH", 
-        content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" 
-      }
+      { id: "MAINTENANCE_LOG.TXT", pass: "MAINTAIN", content: "MAINTENANCE LOG: Routine filter sweeps completed on sector 4 cooling towers. System baseline operating normally." },
+      { id: "CONTAINMENT_NOTES.TXT", pass: "SECTOR4", content: "CONTAINMENT NOTES: Subject N-01 displays unusual feedback response during high-load diagnostics. Do not leave unattended." },
+      { id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." },
+      { id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." },
+      { id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
+      { id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director ███████ requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." },
+      { id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." },
+      { id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." },
+      { id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
+      { id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." },
+      { id: "SHUTDOWN_CODE.TXT", pass: "OVERRIDE", content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." },
+      { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" }
     ];
 
     const NordicMoods = [
@@ -1127,15 +1073,9 @@
         this.chatHistory.push({ role: "user", content: inputText });
 
         const apiPayload = {
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          temperature: 1,
           visitorId: this.id,
           messages: [
-            {
-              role: "user",
-              content: `You are NORDIC, an ominous AI terminal in a horror-themed browser game. The user is your Observer (Node ID: ${this.id}, Session #${this.sessions}, Corruption Level: ${this.systemCorruption}%). Keep your tone mysterious, subtle, and immersive. Answer in 1 to 3 short sentences maximum. Never break character, never mention you are an AI model or API. User input: "${inputText}"`
-            }
+            { role: "user", content: inputText }
           ]
         };
 
