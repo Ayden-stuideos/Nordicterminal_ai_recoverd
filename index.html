@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — SECURE TERMINAL (VERBOSE BUILD)</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL (EXACT LOGO BUILD)</title>
   <style>
     :root {
       --bg-color: #0F172A;
@@ -106,11 +106,6 @@
     .header-btn.active {
       background: var(--primary-cyan);
       color: var(--bg-color);
-    }
-
-    .header-btn:active { 
-      background: var(--primary-cyan); 
-      color: var(--bg-color); 
     }
 
     #terminal {
@@ -263,16 +258,19 @@
       gap: 18px;
     }
 
-    /* CUSTOM EXACT LOGO STYLE (TRIANGLE WITH CYBERNETIC CROSSHAIR CORE) */
-    .nordic-triangle-logo {
-      width: 120px;
-      height: 120px;
+    /* MATCHING EXACT LOGO GEOMETRY: 
+       - Outer Triangle 
+       - Inner Horizontal Split / Hexagon Core
+       - Intersecting Vertical & Diagonal Nodes */
+    .nordic-exact-logo {
+      width: 130px;
+      height: 130px;
       animation: logoPulse 2.5s ease-in-out infinite;
     }
 
     @keyframes logoPulse {
-      0%, 100% { filter: drop-shadow(0 0 8px rgba(0,229,255,0.4)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 20px rgba(0,229,255,0.8)); transform: scale(1.04); }
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(0,229,255,0.5)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 22px rgba(0,229,255,0.9)); transform: scale(1.03); }
     }
 
     .loading-status-line {
@@ -310,18 +308,23 @@
 
   <div id="loading-screen">
     <div class="loading-content">
-      <svg class="nordic-triangle-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,6 8,92 92,92" fill="none" stroke="#00E5FF" stroke-width="3" stroke-linejoin="round" />
-        <polygon points="50,22 20,82 80,82" fill="none" stroke="#0099CC" stroke-width="1.5" stroke-dasharray="3 2" />
-        <line x1="50" y1="6" x2="50" y2="92" stroke="#00E5FF" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
-        <line x1="8" y1="62" x2="92" y2="62" stroke="#00E5FF" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>
-        <circle cx="50" cy="62" r="5" fill="none" stroke="#FF3B30" stroke-width="2" />
-        <circle cx="50" cy="62" r="1.5" fill="#FF3B30" />
-        <path d="M 38 45 L 50 33 L 62 45" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <polygon points="50,62 38,82 62,82" fill="rgba(0,229,255,0.08)" />
+      <svg class="nordic-exact-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,4 6,94 94,94" fill="none" stroke="#00E5FF" stroke-width="4" stroke-linejoin="round" />
+        
+        <line x1="50" y1="4" x2="50" y2="94" stroke="#00E5FF" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
+        <line x1="28" y1="52" x2="72" y2="52" stroke="#00E5FF" stroke-width="1.5" opacity="0.8"/>
+        
+        <polygon points="50,34 64,46 64,68 50,78 36,68 36,46" fill="rgba(0, 229, 255, 0.06)" stroke="#0099CC" stroke-width="2"/>
+        
+        <circle cx="50" cy="57" r="6" fill="none" stroke="#FF3B30" stroke-width="2.5" />
+        <circle cx="50" cy="57" r="2" fill="#FF3B30" />
+        
+        <circle cx="50" cy="4" r="2" fill="#00E5FF" />
+        <circle cx="6" cy="94" r="2" fill="#00E5FF" />
+        <circle cx="94" cy="94" r="2" fill="#00E5FF" />
       </svg>
 
-      <div id="loading-text" class="loading-status-line">NORDIC // INITIALIZING KERNEL...</div>
+      <div id="loading-text" class="loading-status-line">NORDIC // MOUNTING KERNEL...</div>
       
       <div class="progress-bar-border">
         <div id="progress-fill" class="progress-bar-fill"></div>
@@ -375,12 +378,8 @@
     const DeviceManager = {
       detectDevice: function() {
         const userAgentString = navigator.userAgent || navigator.vendor || window.opera;
-        if (/android/i.test(userAgentString)) {
-          return "ANDROID";
-        }
-        if (/iPad|iPhone|iPod/.test(userAgentString) && !window.MSStream) {
-          return "IOS";
-        }
+        if (/android/i.test(userAgentString)) return "ANDROID";
+        if (/iPad|iPhone|iPod/.test(userAgentString) && !window.MSStream) return "IOS";
         return "DESKTOP";
       }
     };
@@ -389,21 +388,15 @@
       get: function(storageKey, fallbackValue) {
         try {
           const itemValue = localStorage.getItem(storageKey);
-          if (itemValue !== null) {
-            return itemValue;
-          }
-          return fallbackValue;
-        } catch (storageError) {
-          console.warn("Local storage read access failed:", storageError);
+          return itemValue !== null ? itemValue : fallbackValue;
+        } catch (e) {
           return fallbackValue;
         }
       },
       set: function(storageKey, storageValue) {
         try {
           localStorage.setItem(storageKey, storageValue);
-        } catch (storageError) {
-          console.warn("Local storage write access failed:", storageError);
-        }
+        } catch (e) {}
       }
     };
 
@@ -449,9 +442,7 @@
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0'), 10) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
-      interactionCount: 0,
       systemCorruption: parseInt(SafeStorage.get('nordic_corruption', '0'), 10),
-
       mediaStream: null,
       watchEnabled: false,
       listenEnabled: false,
@@ -460,7 +451,6 @@
       recognitionSupported: false,
       chatHistory: [],
       awaitingReply: false,
-
       lastActivityTimestamp: Date.now(),
       lastIdleMessageIndex: -1,
 
@@ -469,15 +459,11 @@
         SafeStorage.set('nordic_sessions', this.sessions);
         
         const badgeElement = document.getElementById('session-badge');
-        if (badgeElement) {
-          badgeElement.innerText = `${this.id} | S: ${this.sessions}`;
-        }
+        if (badgeElement) badgeElement.innerText = `${this.id} | S: ${this.sessions}`;
 
         const agreeButton = document.getElementById('agree-btn');
         if (agreeButton) {
-          agreeButton.addEventListener('click', () => {
-            this.requestMediaAndBoot();
-          });
+          agreeButton.addEventListener('click', () => this.requestMediaAndBoot());
         }
 
         this.runLoadingSequence();
@@ -542,28 +528,17 @@
         const overlay = document.getElementById('consent-overlay');
 
         try {
-          const mediaConstraints = { video: true, audio: true };
-          const streamInstance = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-          
+          const streamInstance = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
           this.mediaStream = streamInstance;
-          if (videoElement) {
-            videoElement.srcObject = streamInstance;
-          }
-          if (previewContainer) {
-            previewContainer.style.display = 'flex';
-          }
+          if (videoElement) videoElement.srcObject = streamInstance;
+          if (previewContainer) previewContainer.style.display = 'flex';
 
           setTimeout(() => {
-            if (overlay) {
-              overlay.style.display = 'none';
-            }
+            if (overlay) overlay.style.display = 'none';
             this.startTerminalInterface();
           }, 1200);
-        } catch (mediaError) {
-          console.warn("Media access permission was denied or is unavailable:", mediaError);
-          if (overlay) {
-            overlay.style.display = 'none';
-          }
+        } catch (e) {
+          if (overlay) overlay.style.display = 'none';
           this.startTerminalInterface();
         }
       },
@@ -578,60 +553,31 @@
 
         if (this.deviceType === "DESKTOP") {
           document.body.classList.add("desktop-crt");
-          if (inputField) {
-            inputField.focus();
-          }
+          if (inputField) inputField.focus();
         }
 
         if (formElement) {
-          formElement.addEventListener('submit', (submitEvent) => {
-            submitEvent.preventDefault();
+          formElement.addEventListener('submit', (e) => {
+            e.preventDefault();
             this.handleInput();
           });
         }
 
-        if (filesButton) {
-          filesButton.addEventListener('click', (clickEvent) => {
-            clickEvent.stopPropagation();
-            this.showFilesList();
-          });
-        }
-
-        if (watchButton) {
-          watchButton.addEventListener('click', (clickEvent) => {
-            clickEvent.stopPropagation();
-            this.toggleWatch();
-          });
-        }
-
-        if (listenButton) {
-          listenButton.addEventListener('click', (clickEvent) => {
-            clickEvent.stopPropagation();
-            this.toggleListen();
-          });
-        }
+        if (filesButton) filesButton.addEventListener('click', (e) => { e.stopPropagation(); this.showFilesList(); });
+        if (watchButton) watchButton.addEventListener('click', (e) => { e.stopPropagation(); this.toggleWatch(); });
+        if (listenButton) listenButton.addEventListener('click', (e) => { e.stopPropagation(); this.toggleListen(); });
 
         const terminalContainer = document.getElementById('terminal');
         if (terminalContainer && inputField) {
-          terminalContainer.addEventListener('click', () => {
-            inputField.focus();
-          });
+          terminalContainer.addEventListener('click', () => inputField.focus());
         }
-
         if (promptSymbolElement && inputField) {
-          promptSymbolElement.addEventListener('click', () => {
-            inputField.focus();
-          });
+          promptSymbolElement.addEventListener('click', () => inputField.focus());
         }
 
         if (inputField) {
-          inputField.addEventListener('input', () => {
-            this.updateActivity();
-            inputField.classList.remove('cursor-blink');
-          });
-          inputField.addEventListener('blur', () => {
-            inputField.classList.add('cursor-blink');
-          });
+          inputField.addEventListener('input', () => { this.updateActivity(); inputField.classList.remove('cursor-blink'); });
+          inputField.addEventListener('blur', () => inputField.classList.add('cursor-blink'));
           inputField.classList.add('cursor-blink');
         }
 
@@ -649,14 +595,12 @@
 
       initVisualEngineEffects: function() {
         const runFlicker = () => {
-          const corruptionMultiplier = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
-          const nextTime = (20000 + Math.random() * 40000) * corruptionMultiplier;
-          
+          const mult = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
+          const nextTime = (20000 + Math.random() * 40000) * mult;
           setTimeout(() => {
             const duration = 80 + Math.random() * 120;
             document.documentElement.style.setProperty('--crt-brightness', '0.82');
             document.documentElement.style.setProperty('--scanline-opacity', '0.45');
-            
             setTimeout(() => {
               document.documentElement.style.setProperty('--crt-brightness', '1');
               document.documentElement.style.setProperty('--scanline-opacity', '0.25');
@@ -666,42 +610,12 @@
         };
         runFlicker();
 
-        const runGlitch = () => {
-          const corruptionMultiplier = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
-          const nextGlitchTime = (120000 + Math.random() * 180000) * corruptionMultiplier;
-
-          setTimeout(() => {
-            const glitchDuration = 150 + Math.random() * 150;
-            const shiftVal = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.floor(Math.random() * 4));
-            
-            document.documentElement.style.setProperty('--shift-x', `${shiftVal}px`);
-            
-            setTimeout(() => {
-              document.documentElement.style.setProperty('--shift-x', '0px');
-              runGlitch();
-            }, glitchDuration);
-          }, nextGlitchTime);
-        };
-        runGlitch();
-
         setInterval(() => {
-          const inactiveDuration = Date.now() - this.lastActivityTimestamp;
-          const targetIdleTime = (45000 + Math.random() * 45000);
-
-          if (inactiveDuration >= targetIdleTime && !this.awaitingReply) {
-            let availableIndices = [];
-            for (let i = 0; i < IdleMessages.length; i++) {
-              if (i !== this.lastIdleMessageIndex) availableIndices.push(i);
-            }
-            const chosenIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-            this.lastIdleMessageIndex = chosenIdx;
-            
-            let messageToPrint = IdleMessages[chosenIdx];
-            if (this.systemCorruption > 5 && Math.random() > 0.6) {
-              messageToPrint = "[CORRUPT_PACKET_RECEIVED]";
-            }
-
-            this.print(`NORDIC: ${messageToPrint}`, "vision");
+          if (Date.now() - this.lastActivityTimestamp >= (45000 + Math.random() * 45000) && !this.awaitingReply) {
+            let idxs = [];
+            for (let i = 0; i < IdleMessages.length; i++) if (i !== this.lastIdleMessageIndex) idxs.push(i);
+            this.lastIdleMessageIndex = idxs[Math.floor(Math.random() * idxs.length)];
+            this.print(`NORDIC: ${IdleMessages[this.lastIdleMessageIndex]}`, "vision");
             this.updateActivity();
           }
         }, 10000);
@@ -709,413 +623,206 @@
 
       flashAlertBorder: function() {
         document.body.classList.add('alert-glow');
-        const duration = 200 + Math.random() * 200;
-        setTimeout(() => {
-          document.body.classList.remove('alert-glow');
-        }, duration);
+        setTimeout(() => document.body.classList.remove('alert-glow'), 250);
       },
 
-      print: function(messageText, messageType = 'nordic') {
+      print: function(msg, type = 'nordic') {
         const terminalContainer = document.getElementById('terminal');
         if (!terminalContainer) return;
+        if (type === 'alert') this.flashAlertBorder();
 
-        if (messageType === 'alert') {
-          this.flashAlertBorder();
-        }
-
-        let processedText = messageText;
-        if (messageType === 'nordic' && Math.random() < 0.15) {
-          processedText = processedText.replace('NORDIC', () => {
-            const variants = ['N0RDIC', 'NØRDIC', 'N▒RDIC'];
-            return variants[Math.floor(Math.random() * variants.length)];
-          });
-        }
-
-        const paragraphElement = document.createElement('p');
-        paragraphElement.className = `log ${messageType}`;
-        paragraphElement.innerText = processedText;
-        
-        terminalContainer.appendChild(paragraphElement);
+        const p = document.createElement('p');
+        p.className = `log ${type}`;
+        p.innerText = msg;
+        terminalContainer.appendChild(p);
         terminalContainer.scrollTop = terminalContainer.scrollHeight;
       },
 
       bootSequence: function() {
         const terminalContainer = document.getElementById('terminal');
         if (terminalContainer) terminalContainer.innerHTML = '';
-
-        setTimeout(() => {
-          this.print("INITIALIZING...", "sys");
-        }, 400);
-
-        setTimeout(() => {
-          this.print("CONNECTING...", "sys");
-        }, 1100);
-
-        setTimeout(() => {
-          this.print("SESSION VERIFIED...", "sys");
-        }, 1800);
-
-        setTimeout(() => {
-          this.print(`Node signature accepted: ${this.id}`, "sys");
-        }, 2500);
-
-        setTimeout(() => {
-          this.print(`NORDIC: Connection stable. Session #${this.sessions}.`);
-        }, 3200);
+        setTimeout(() => this.print("INITIALIZING...", "sys"), 400);
+        setTimeout(() => this.print("CONNECTING...", "sys"), 1100);
+        setTimeout(() => this.print("SESSION VERIFIED...", "sys"), 1800);
+        setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 2500);
+        setTimeout(() => this.print(`NORDIC: Connection stable. Session #${this.sessions}.`), 3200);
       },
 
       showFilesList: function() {
-        let outputString = "[ENCRYPTED ARCHIVE — 12 FILES]\n";
-        outputString += "-------------------------------------------\n";
-        
-        DefaultFiles.forEach((fileItem, fileIndex) => {
-          const isUnlocked = this.unlockedFiles.includes(fileItem.id);
-          const statusLabel = isUnlocked ? "[UNLOCKED]" : "[LOCKED 🔒]";
-          const fileNumbering = (fileIndex + 1).toString().padStart(2, '0');
-          outputString += `${fileNumbering}. ${fileItem.id.padEnd(24, ' ')} ${statusLabel}\n`;
+        let out = "[ENCRYPTED ARCHIVE — 12 FILES]\n-------------------------------------------\n";
+        DefaultFiles.forEach((f, i) => {
+          out += `${(i+1).toString().padStart(2, '0')}. ${f.id.padEnd(24, ' ')} ${this.unlockedFiles.includes(f.id) ? "[UNLOCKED]" : "[LOCKED 🔒]"}\n`;
         });
-        
-        outputString += "-------------------------------------------\n";
-        outputString += "To open a file, type: unlock <FILENAME> <PASSWORD>\n";
-        outputString += "Other commands: watch on/off, listen on/off, status, clear";
-        
-        this.print(outputString, "sys");
+        out += "-------------------------------------------\nTo open a file, type: unlock <FILENAME> <PASSWORD>";
+        this.print(out, "sys");
       },
 
       toggleWatch: function() {
-        if (this.watchEnabled) {
-          this.stopWatching();
-        } else {
-          this.startWatching();
-        }
+        if (this.watchEnabled) this.stopWatching(); else this.startWatching();
       },
 
       startWatching: function() {
         if (!this.mediaStream) {
-          this.print("NORDIC: No camera feed available. Reload and accept the permissions prompt to enable WATCH.", "alert");
+          this.print("NORDIC: No camera feed available.", "alert");
           return;
         }
-
-        const videoTrack = this.mediaStream.getVideoTracks()[0];
-        if (!videoTrack) {
-          this.print("NORDIC: No video track available.", "alert");
-          return;
-        }
-
-        videoTrack.enabled = true;
+        this.mediaStream.getVideoTracks()[0].enabled = true;
         this.watchEnabled = true;
-
-        const watchBtnElement = document.getElementById('watch-btn');
-        if (watchBtnElement) {
-          watchBtnElement.classList.add('active');
-          watchBtnElement.innerText = '[WATCH: ON]';
-        }
-
+        const btn = document.getElementById('watch-btn');
+        if (btn) { btn.classList.add('active'); btn.innerText = '[WATCH: ON]'; }
         this.print("NORDIC: I can see you now.", "vision");
         this.watchTimerId = setTimeout(() => this.watchLoop(), 4000);
       },
 
       stopWatching: function() {
         this.watchEnabled = false;
-        if (this.watchTimerId) {
-          clearTimeout(this.watchTimerId);
-        }
-        this.watchTimerId = null;
-
-        if (this.mediaStream) {
-          const videoTrack = this.mediaStream.getVideoTracks()[0];
-          if (videoTrack) {
-            videoTrack.enabled = false;
-          }
-        }
-
-        const watchBtnElement = document.getElementById('watch-btn');
-        if (watchBtnElement) {
-          watchBtnElement.classList.remove('active');
-          watchBtnElement.innerText = '[WATCH: OFF]';
-        }
-
+        if (this.watchTimerId) clearTimeout(this.watchTimerId);
+        if (this.mediaStream) this.mediaStream.getVideoTracks()[0].enabled = false;
+        const btn = document.getElementById('watch-btn');
+        if (btn) { btn.classList.remove('active'); btn.innerText = '[WATCH: OFF]'; }
         this.print("NORDIC: Looking away.", "vision");
       },
 
       watchLoop: function() {
         if (!this.watchEnabled) return;
         this.commentOnFrame();
-        const corruptionFactor = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
-        const nextIntervalDelay = (25000 + Math.random() * 20000) * corruptionFactor;
-        this.watchTimerId = setTimeout(() => this.watchLoop(), nextIntervalDelay);
+        this.watchTimerId = setTimeout(() => this.watchLoop(), 25000 + Math.random() * 20000);
       },
 
       captureFrame: function() {
-        const videoElement = document.getElementById('webcam');
-        const canvasElement = document.getElementById('capture-canvas');
-        if (!videoElement || !canvasElement || !videoElement.videoWidth) {
-          return null;
-        }
-
-        canvasElement.width = videoElement.videoWidth;
-        canvasElement.height = videoElement.videoHeight;
-        
-        const canvasContext = canvasElement.getContext('2d');
-        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-        
-        return canvasElement.toDataURL('image/jpeg', 0.7).split(',')[1];
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('capture-canvas');
+        if (!video || !canvas || !video.videoWidth) return null;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        return canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
       },
 
       commentOnFrame: async function() {
-        const base64EncodedImageString = this.captureFrame();
-        if (!base64EncodedImageString) return;
-
-        const chosenMood = NordicMoods[Math.floor(Math.random() * NordicMoods.length)];
-
+        const b64 = this.captureFrame();
+        if (!b64) return;
+        const mood = NordicMoods[Math.floor(Math.random() * NordicMoods.length)];
         try {
-          const requestPayload = {
-            model: "claude-sonnet-4-6",
-            max_tokens: 1000,
-            temperature: 1,
-            messages: [{
-              role: "user",
-              content: [
-                { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64EncodedImageString } },
-                { type: "text", text: `You are NORDIC, an ominous but not graphic AI observer in a horror-themed terminal game. Look at this webcam frame and respond with ONE short, unsettling but PG-rated observation (max 20 words) about what you notice. For this observation specifically, your tone should be: ${chosenMood}. Never mention that you are an AI model, an API, or Anthropic. Stay in character as NORDIC. Do not describe anything sexual, violent, or identify the person by name.` }
-              ]
-            }]
-          };
-
-          const apiResponse = await fetch(PROXY_URL, {
+          const res = await fetch(PROXY_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestPayload)
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6", max_tokens: 1000, temperature: 1,
+              messages: [{ role: "user", content: [
+                { type: "image", source: { type: "base64", media_type: "image/jpeg", data: b64 } },
+                { type: "text", text: `You are NORDIC, an ominous AI observer. Look at this webcam frame and respond with ONE short, unsettling PG-rated observation (max 20 words). Tone: ${mood}.` }
+              ]}]
+            })
           });
-
-          const responseJsonData = await apiResponse.json();
-
-          if (responseJsonData.error) {
-            console.warn("Vision API returned an error:", responseJsonData.error);
-            return;
-          }
-
-          const contentBlocks = responseJsonData.content || [];
-          const generatedVisionText = contentBlocks.map(block => block.text || "").join(" ").trim();
-
-          if (generatedVisionText) {
-            this.print(`NORDIC: ${generatedVisionText}`, "vision");
-          }
-        } catch (visionApiError) {
-          console.warn("Vision commentary fetch operation failed:", visionApiError);
-        }
+          const d = await res.json();
+          const txt = (d.content || []).map(b => b.text || "").join(" ").trim();
+          if (txt) this.print(`NORDIC: ${txt}`, "vision");
+        } catch (e) {}
       },
 
       setupRecognition: function() {
-        const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognitionApi) {
-          this.recognitionSupported = false;
-          return;
-        }
-
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return;
         this.recognitionSupported = true;
-        this.recognition = new SpeechRecognitionApi();
+        this.recognition = new SpeechRec();
         this.recognition.continuous = true;
         this.recognition.interimResults = false;
         this.recognition.lang = 'en-US';
-
-        this.recognition.onresult = (speechEvent) => {
-          const latestResultIndex = speechEvent.results.length - 1;
-          const transcriptText = speechEvent.results[latestResultIndex][0].transcript.trim();
-          this.handleHeardSpeech(transcriptText);
-        };
-
-        this.recognition.onerror = (speechErrorEvent) => {
-          console.warn("Speech recognition error captured:", speechErrorEvent.error);
-        };
-
-        this.recognition.onend = () => {
-          if (this.listenEnabled) {
-            try {
-              this.recognition.start();
-            } catch (restartError) {
-              console.warn("Could not restart speech recognition instance:", restartError);
-            }
+        this.recognition.onresult = (e) => {
+          const t = e.results[e.results.length - 1][0].transcript.trim();
+          if (t.toLowerCase().includes('nordic')) {
+            this.print(`> (spoken) ${t}`, "user");
+            const sub = t.slice(t.toLowerCase().indexOf('nordic') + 6).trim();
+            if (sub) this.processResponse(sub);
           }
         };
+        this.recognition.onend = () => { if (this.listenEnabled) try { this.recognition.start(); } catch (e) {} };
       },
 
       toggleListen: function() {
-        if (this.listenEnabled) {
-          this.stopListening();
-        } else {
-          this.startListening();
-        }
+        if (this.listenEnabled) this.stopListening(); else this.startListening();
       },
 
       startListening: function() {
-        if (!this.recognitionSupported) {
-          this.print("NORDIC: This browser doesn't support speech recognition.", "alert");
-          return;
-        }
-
+        if (!this.recognitionSupported) return;
         this.listenEnabled = true;
-        try {
-          this.recognition.start();
-        } catch (startError) {
-          console.warn("Recognition start execution failed:", startError);
-        }
-
-        const listenBtnElement = document.getElementById('listen-btn');
-        if (listenBtnElement) {
-          listenBtnElement.classList.add('active');
-          listenBtnElement.innerText = '[LISTEN: ON]';
-        }
-
-        this.print("NORDIC: I'm listening. Say \"Nordic\" if you want my attention.", "vision");
+        try { this.recognition.start(); } catch (e) {}
+        const btn = document.getElementById('listen-btn');
+        if (btn) { btn.classList.add('active'); btn.innerText = '[LISTEN: ON]'; }
+        this.print("NORDIC: I'm listening. Say \"Nordic\".", "vision");
       },
 
       stopListening: function() {
         this.listenEnabled = false;
-        if (this.recognition) {
-          try {
-            this.recognition.stop();
-          } catch (stopError) {
-            console.warn("Recognition stop execution failed:", stopError);
-          }
-        }
-
-        const listenBtnElement = document.getElementById('listen-btn');
-        if (listenBtnElement) {
-          listenBtnElement.classList.remove('active');
-          listenBtnElement.innerText = '[LISTEN: OFF]';
-        }
-
+        if (this.recognition) try { this.recognition.stop(); } catch (e) {}
+        const btn = document.getElementById('listen-btn');
+        if (btn) { btn.classList.remove('active'); btn.innerText = '[LISTEN: OFF]'; }
         this.print("NORDIC: Going quiet.", "vision");
       },
 
-      handleHeardSpeech: function(transcriptText) {
-        const lowerCaseTranscript = transcriptText.toLowerCase();
-        const wakeWordIndex = lowerCaseTranscript.indexOf('nordic');
-        if (wakeWordIndex === -1) return;
-
-        const utteranceAfterWakeWord = transcriptText.slice(wakeWordIndex + 6).trim().replace(/^[,:.\s]+/, '');
-        this.print(`> (spoken) ${transcriptText}`, "user");
-
-        if (utteranceAfterWakeWord) {
-          this.processResponse(utteranceAfterWakeWord);
-        } else {
-          this.print("NORDIC: I'm here.", "vision");
-        }
-      },
-
       handleInput: function() {
-        const inputFieldElement = document.getElementById('command-input');
-        if (!inputFieldElement) return;
-
-        const rawInputValue = inputFieldElement.value;
-        const sanitizedInput = rawInputValue.trim();
-        if (!sanitizedInput) return;
-
-        this.print(`> ${sanitizedInput}`, "user");
-        inputFieldElement.value = '';
-        this.interactionCount++;
-
-        setTimeout(() => {
-          this.processResponse(sanitizedInput);
-        }, 150);
+        const inputField = document.getElementById('command-input');
+        if (!inputField) return;
+        const val = inputField.value.trim();
+        if (!val) return;
+        this.print(`> ${val}`, "user");
+        inputField.value = '';
+        setTimeout(() => this.processResponse(val), 150);
       },
 
-      processResponse: function(inputText) {
-        const lowerCaseInput = inputText.toLowerCase().trim();
-        const tokens = inputText.trim().split(/\s+/);
+      processResponse: function(text) {
+        const lower = text.toLowerCase().trim();
+        const tokens = text.trim().split(/\s+/);
 
-        if (lowerCaseInput === 'status') {
-          let statusOutput = `[SYSTEM STATUS REPORT]\n`;
-          statusOutput += `SESSION ID: #${this.sessions}\n`;
-          statusOutput += `NODE IDENT: ${this.id}\n`;
-          statusOutput += `DEVICE TYPE: ${this.deviceType}\n`;
-          statusOutput += `SYSTEM CORRUPTION: ${this.systemCorruption}%\n`;
-          statusOutput += `UNLOCKED FILES: ${this.unlockedFiles.length} / 12`;
-          this.print(statusOutput, "sys");
+        if (lower === 'status') {
+          this.print(`[SYSTEM STATUS]\nID: ${this.id}\nSESSION: #${this.sessions}\nCORRUPTION: ${this.systemCorruption}%\nUNLOCKED: ${this.unlockedFiles.length}/12`, "sys");
           return;
         }
-
-        if (lowerCaseInput === 'clear') {
-          const terminalContainer = document.getElementById('terminal');
-          if (terminalContainer) terminalContainer.innerHTML = '';
+        if (lower === 'clear') {
+          document.getElementById('terminal').innerHTML = '';
           return;
         }
-
         if (tokens[0].toLowerCase() === 'unlock' && tokens.length >= 3) {
-          const targetFileName = tokens[1];
-          const passwordAttempt = tokens.slice(2).join(' ');
-          
-          const matchedFile = DefaultFiles.find(f => f.id.toLowerCase() === targetFileName.toLowerCase());
-          if (!matchedFile) {
-            this.print("NORDIC: Target file not found in encrypted directory.", "alert");
-            return;
-          }
-
-          if (passwordAttempt === matchedFile.pass) {
-            if (!this.unlockedFiles.includes(matchedFile.id)) {
-              this.unlockedFiles.push(matchedFile.id);
+          const file = DefaultFiles.find(f => f.id.toLowerCase() === tokens[1].toLowerCase());
+          if (!file) { this.print("NORDIC: Target file not found.", "alert"); return; }
+          if (tokens.slice(2).join(' ') === file.pass) {
+            if (!this.unlockedFiles.includes(file.id)) {
+              this.unlockedFiles.push(file.id);
               SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
             }
-            this.print(`[FILE UNLOCKED: ${matchedFile.id}]\n${matchedFile.content}`, "sys");
-            if (matchedFile.id === 'THE_TRUTH.TXT') {
-              this.increaseCorruption(5);
-            }
+            this.print(`[FILE UNLOCKED: ${file.id}]\n${file.content}`, "sys");
+            if (file.id === 'THE_TRUTH.TXT') this.increaseCorruption(5);
           } else {
-            this.print("NORDIC: Access denied. Invalid decryption key phrase.", "alert");
+            this.print("NORDIC: Access denied.", "alert");
             this.increaseCorruption(1);
           }
           return;
         }
 
         this.awaitingReply = true;
-        this.chatHistory.push({ role: "user", content: inputText });
-
-        const apiPayload = {
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          temperature: 1,
-          messages: [
-            {
-              role: "user",
-              content: `You are NORDIC, an ominous AI terminal in a horror-themed browser game. The user is your Observer (Node ID: ${this.id}, Session #${this.sessions}, Corruption Level: ${this.systemCorruption}%). Keep your tone mysterious, subtle, and immersive. Answer in 1 to 3 short sentences maximum. Never break character, never mention you are an AI model or API. User input: "${inputText}"`
-            }
-          ]
-        };
-
         fetch(PROXY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(apiPayload)
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6", max_tokens: 1000, temperature: 1,
+            messages: [{ role: "user", content: `You are NORDIC, an ominous AI terminal. Observer ID: ${this.id}, Session #${this.sessions}, Corruption: ${this.systemCorruption}%. Keep responses 1-3 sentences. User input: "${text}"` }]
+          })
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(res => res.json())
+        .then(d => {
           this.awaitingReply = false;
-          if (data.error) {
-            this.print("NORDIC: [Telemetry packet corrupted...]", "alert");
-            return;
-          }
-          const responseBlocks = data.content || [];
-          const nordicReply = responseBlocks.map(block => block.text || "").join(" ").trim();
-          
-          if (nordicReply) {
-            this.print(`NORDIC: ${nordicReply}`);
-            this.chatHistory.push({ role: "assistant", content: nordicReply });
-          } else {
-            this.print("NORDIC: [Signal lost...]");
-          }
+          const reply = (d.content || []).map(b => b.text || "").join(" ").trim();
+          this.print(reply ? `NORDIC: ${reply}` : "NORDIC: [Signal lost...]");
         })
-        .catch(error => {
+        .catch(() => {
           this.awaitingReply = false;
-          console.warn("Terminal communication failure:", error);
-          this.print("NORDIC: [Network socket error encountered...]", "alert");
+          this.print("NORDIC: [Network socket error...]", "alert");
         });
       }
     };
 
-    window.addEventListener('DOMContentLoaded', () => {
-      ObserverEngine.init();
-    });
+    window.addEventListener('DOMContentLoaded', () => ObserverEngine.init());
   </script>
 </body>
 </html>
