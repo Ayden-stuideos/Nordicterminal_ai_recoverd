@@ -263,20 +263,21 @@
       gap: 18px;
     }
 
+    /* CUSTOM EXACT LOGO STYLE (TRIANGLE WITH CYBERNETIC CROSSHAIR CORE) */
     .nordic-triangle-logo {
-      width: 110px;
-      height: 110px;
+      width: 120px;
+      height: 120px;
       animation: logoPulse 2.5s ease-in-out infinite;
     }
 
     @keyframes logoPulse {
-      0%, 100% { filter: drop-shadow(0 0 6px rgba(255,59,48,0.4)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 16px rgba(255,59,48,0.85)); transform: scale(1.04); }
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(0,229,255,0.4)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 20px rgba(0,229,255,0.8)); transform: scale(1.04); }
     }
 
     .loading-status-line {
       font-size: 0.75rem;
-      color: var(--alert-red);
+      color: var(--primary-cyan);
       text-transform: uppercase;
       letter-spacing: 2px;
       text-align: center;
@@ -285,16 +286,16 @@
     .progress-bar-border {
       width: 100%;
       height: 12px;
-      border: 1px solid var(--alert-red);
+      border: 1px solid var(--primary-cyan);
       padding: 2px;
-      background: rgba(255, 59, 48, 0.02);
+      background: rgba(0, 229, 255, 0.02);
     }
 
     .progress-bar-fill {
       height: 100%;
       width: 0%;
-      background-color: var(--alert-red);
-      box-shadow: 0 0 8px var(--alert-red);
+      background-color: var(--primary-cyan);
+      box-shadow: 0 0 8px var(--primary-cyan);
       transition: width 0.05s linear;
     }
 
@@ -310,16 +311,14 @@
   <div id="loading-screen">
     <div class="loading-content">
       <svg class="nordic-triangle-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,5 5,90 95,90" fill="none" stroke="#FF3B30" stroke-width="5" />
-        <polygon points="50,47 27,90 73,90" fill="none" stroke="#FF3B30" stroke-width="4" />
-        <polygon points="50,47 73,90 27,90" fill="none" stroke="transparent" />
-        <polygon points="50,47 27,90 73,90" fill="none" stroke="transparent" />
-        <polygon points="50,47 27,90 73,90" fill="none" stroke="transparent" />
-        <line x1="50" y1="5" x2="50" y2="47" stroke="#FF3B30" stroke-width="4" />
-        <line x1="50" y1="47" x2="27" y2="90" stroke="#FF3B30" stroke-width="4" />
-        <line x1="50" y1="47" x2="73" y2="90" stroke="#FF3B30" stroke-width="4" />
-        <line x1="27" y1="90" x2="73" y2="90" stroke="#FF3B30" stroke-width="4" />
-        <polygon points="50,47 27,90 73,90" fill="rgba(255,59,48,0.12)" />
+        <polygon points="50,6 8,92 92,92" fill="none" stroke="#00E5FF" stroke-width="3" stroke-linejoin="round" />
+        <polygon points="50,22 20,82 80,82" fill="none" stroke="#0099CC" stroke-width="1.5" stroke-dasharray="3 2" />
+        <line x1="50" y1="6" x2="50" y2="92" stroke="#00E5FF" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+        <line x1="8" y1="62" x2="92" y2="62" stroke="#00E5FF" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>
+        <circle cx="50" cy="62" r="5" fill="none" stroke="#FF3B30" stroke-width="2" />
+        <circle cx="50" cy="62" r="1.5" fill="#FF3B30" />
+        <path d="M 38 45 L 50 33 L 62 45" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polygon points="50,62 38,82 62,82" fill="rgba(0,229,255,0.08)" />
       </svg>
 
       <div id="loading-text" class="loading-status-line">NORDIC // INITIALIZING KERNEL...</div>
