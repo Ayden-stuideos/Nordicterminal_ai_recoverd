@@ -535,7 +535,7 @@
           });
         }
 
-        // Run the custom loading boot sequence set to exactly 5 seconds (5000ms)
+        // Run the custom loading boot sequence set to exactly 7 seconds (7000ms)
         this.runLoadingSequence();
       },
 
@@ -553,8 +553,8 @@
         ];
 
         let currentProgress = 0;
-        // Total duration = 5000ms. If we run every 50ms, that's 100 ticks. 100 * 50ms = 5000ms (5 seconds).
-        const totalDuration = 5000;
+        // Total duration = 7000ms. If we run every 50ms, that's 140 ticks. 140 * 50ms = 7000ms (7 seconds).
+        const totalDuration = 7000;
         const intervalTime = 50;
         const incrementPerTick = 100 / (totalDuration / intervalTime);
 
