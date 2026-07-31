@@ -308,7 +308,7 @@
       width: 0%;
       background-color: var(--primary-cyan);
       box-shadow: 0 0 8px var(--primary-cyan);
-      transition: width 0.1s linear;
+      transition: width 0.05s linear;
     }
 
     .loading-percentage {
@@ -535,7 +535,7 @@
           });
         }
 
-        // Run the custom loading boot sequence before anything else
+        // Run the custom loading boot sequence set to exactly 5 seconds (5000ms)
         this.runLoadingSequence();
       },
 
@@ -553,12 +553,17 @@
         ];
 
         let currentProgress = 0;
+        // Total duration = 5000ms. If we run every 50ms, that's 100 ticks. 100 * 50ms = 5000ms (5 seconds).
+        const totalDuration = 5000;
+        const intervalTime = 50;
+        const incrementPerTick = 100 / (totalDuration / intervalTime);
+
         const interval = setInterval(() => {
-          currentProgress += 2;
+          currentProgress += incrementPerTick;
           if (currentProgress > 100) currentProgress = 100;
 
           if (progressFill) progressFill.style.width = `${currentProgress}%`;
-          if (loadingPercentage) loadingPercentage.innerText = `${currentProgress}%`;
+          if (loadingPercentage) loadingPercentage.innerText = `${Math.floor(currentProgress)}%`;
 
           for (let i = bootSteps.length - 1; i >= 0; i--) {
             if (currentProgress >= bootSteps[i].threshold) {
@@ -579,9 +584,9 @@
                   if (overlay) overlay.style.display = 'flex';
                 }, 800);
               }
-            }, 500);
+            }, 300);
           }
-        }, 30);
+        }, intervalTime);
       },
 
       increaseCorruption: function(amount = 1) {
