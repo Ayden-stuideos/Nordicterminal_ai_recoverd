@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — SECURE TERMINAL (EXACT LOGO TRACE)</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL (CORRUPTED LOGO FLICKER BUILD)</title>
   <style>
     :root {
       --bg-color: #0F172A;
@@ -258,7 +258,7 @@
       gap: 14px;
     }
 
-    /* TRACED EXACT LOGO MATCHING SCREENSHOT REFERENCE */
+    /* EXACT 3-SEGMENT OUTER + INVERTED CENTER & STRONG BLOOM */
     .nordic-traced-logo-container {
       display: flex;
       flex-direction: column;
@@ -268,23 +268,38 @@
     }
 
     .nordic-traced-logo {
-      width: 140px;
-      height: 110px;
-      filter: drop-shadow(0 0 10px rgba(255, 59, 48, 0.7));
+      width: 150px;
+      height: 120px;
+      filter: drop-shadow(0 0 16px rgba(255, 59, 48, 0.95)) drop-shadow(0 0 32px rgba(255, 59, 48, 0.5));
     }
 
+    /* FUTURISTIC BLOCKY FONT */
     .nordic-logo-text {
-      font-family: var(--font-stack);
+      font-family: "Impact", Charcoal, sans-serif;
       font-weight: 900;
-      font-size: 1.6rem;
-      letter-spacing: 5px;
+      font-size: 1.8rem;
+      letter-spacing: 6px;
       color: #FF3B30;
-      text-shadow: 0 0 10px rgba(255, 59, 48, 0.7);
+      text-shadow: 0 0 12px rgba(255, 59, 48, 0.9), 0 0 24px rgba(255, 59, 48, 0.6);
     }
 
     @keyframes logoPulse {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.5)); }
-      50% { transform: scale(1.03); filter: drop-shadow(0 0 18px rgba(255, 59, 48, 0.9)); }
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(255, 59, 48, 0.8)); }
+      50% { transform: scale(1.04); filter: drop-shadow(0 0 28px rgba(255, 59, 48, 1)); }
+    }
+
+    /* GLITCH EFFECT AT 100% */
+    @keyframes glitchAnim {
+      0% { transform: translate(0); filter: hue-rotate(0deg) invert(0); }
+      20% { transform: translate(-4px, 2px); filter: hue-rotate(90deg) invert(0.2); }
+      40% { transform: translate(4px, -2px); filter: hue-rotate(180deg) invert(0.5); }
+      60% { transform: translate(-2px, -3px); filter: hue-rotate(270deg) invert(0.1); }
+      80% { transform: translate(3px, 3px); filter: hue-rotate(45deg) invert(0.8); }
+      100% { transform: translate(0); filter: hue-rotate(0deg) invert(0); }
+    }
+
+    .glitching {
+      animation: glitchAnim 0.15s steps(2, end) infinite !important;
     }
 
     .loading-status-line {
@@ -322,11 +337,13 @@
 
   <div id="loading-screen">
     <div class="loading-content">
-      <div class="nordic-traced-logo-container">
-        <svg class="nordic-traced-logo" viewBox="0 0 140 100" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="70,4 132,94 8,94" fill="none" stroke="#FF3B30" stroke-width="4.5" stroke-linejoin="round" />
+      <div id="logo-wrapper" class="nordic-traced-logo-container">
+        <svg class="nordic-traced-logo" viewBox="0 0 140 120" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="70,4 98,46 42,46" fill="none" stroke="#FF3B30" stroke-width="5" stroke-linejoin="round" />
+          <polygon points="6,94 64,94 35,52" fill="none" stroke="#FF3B30" stroke-width="5" stroke-linejoin="round" />
+          <polygon points="76,94 134,94 105,52" fill="none" stroke="#FF3B30" stroke-width="5" stroke-linejoin="round" />
           
-          <polygon points="70,38 103,84 37,84" fill="none" stroke="#FF3B30" stroke-width="3.5" stroke-linejoin="round" />
+          <polygon points="70,78 95,44 45,44" fill="none" stroke="#FF3B30" stroke-width="4.5" stroke-linejoin="round" />
         </svg>
         <div class="nordic-logo-text">NORDIC</div>
       </div>
@@ -481,6 +498,7 @@
         const progressFill = document.getElementById('progress-fill');
         const loadingPercentage = document.getElementById('loading-percentage');
         const loadingText = document.getElementById('loading-text');
+        const logoWrapper = document.getElementById('logo-wrapper');
 
         const bootSteps = [
           { threshold: 15, text: "NORDIC // MOUNTING ENCRYPTED FILE REGISTRY..." },
@@ -493,6 +511,7 @@
         const totalDuration = 7000;
         const intervalTime = 50;
         const incrementPerTick = 100 / (totalDuration / intervalTime);
+        let glitched = false;
 
         const interval = setInterval(() => {
           currentProgress += incrementPerTick;
@@ -508,6 +527,19 @@
             }
           }
 
+          // Trigger brief glitch at 100%
+          if (currentProgress >= 100 && !glitched) {
+            glitched = true;
+            if (logoWrapper) logoWrapper.classList.add('glitching');
+            if (loadingText) loadingText.innerText = "WARNING: CORE ANOMALY DETECTED.";
+            document.body.classList.add('alert-glow');
+
+            setTimeout(() => {
+              if (logoWrapper) logoWrapper.classList.remove('glitching');
+              document.body.classList.remove('alert-glow');
+            }, 600);
+          }
+
           if (currentProgress >= 100) {
             clearInterval(interval);
             setTimeout(() => {
@@ -519,7 +551,7 @@
                   if (overlay) overlay.style.display = 'flex';
                 }, 800);
               }
-            }, 300);
+            }, 800);
           }
         }, intervalTime);
       },
