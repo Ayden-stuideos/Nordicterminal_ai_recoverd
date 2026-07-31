@@ -250,11 +250,95 @@
       object-fit: cover; 
       transform: scaleX(-1); 
     }
+
+    /* ==========================================
+       CUSTOM NORDIC BOOT SEQUENCE SCREEN STYLES
+       ========================================== */
+    #loading-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-color);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px;
+      transition: opacity 0.8s ease;
+    }
+
+    .loading-content {
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .nordic-triangle-logo {
+      width: 100px;
+      height: 100px;
+      animation: logoPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(0,229,255,0.3)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 14px rgba(0,229,255,0.75)); transform: scale(1.04); }
+    }
+
+    .loading-status-line {
+      font-size: 0.75rem;
+      color: var(--deep-cyan);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .progress-bar-border {
+      width: 100%;
+      height: 12px;
+      border: 1px solid var(--primary-cyan);
+      padding: 2px;
+      background: rgba(0, 229, 255, 0.02);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--primary-cyan);
+      box-shadow: 0 0 8px var(--primary-cyan);
+      transition: width 0.1s linear;
+    }
+
+    .loading-percentage {
+      font-size: 0.7rem;
+      color: var(--secondary-grey);
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
 
-  <div id="consent-overlay">
+  <div id="loading-screen">
+    <div class="loading-content">
+      <svg class="nordic-triangle-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,15 15,80 50,55" fill="#00E5FF" opacity="0.9" />
+        <polygon points="85,80 50,55 50,95" fill="#0099CC" opacity="0.9" />
+        <polygon points="15,80 50,55 85,80" fill="#E2F8FF" opacity="0.25" />
+      </svg>
+
+      <div id="loading-text" class="loading-status-line">NORDIC // INITIALIZING KERNEL...</div>
+      
+      <div class="progress-bar-border">
+        <div id="progress-fill" class="progress-bar-fill"></div>
+      </div>
+      
+      <div id="loading-percentage" class="loading-percentage">0%</div>
+    </div>
+  </div>
+
+  <div id="consent-overlay" style="display:none;">
     <div class="consent-box">
       <h2>PROJECT // NORDIC PERMISSIONS</h2>
       <p>This terminal can optionally use your camera and microphone so NORDIC can react to what it sees and hears. Nothing is recorded or sent anywhere unless you turn WATCH or LISTEN on, and you can disable either at any time. Click below to continue.</p>
@@ -450,6 +534,54 @@
             this.requestMediaAndBoot();
           });
         }
+
+        // Run the custom loading boot sequence before anything else
+        this.runLoadingSequence();
+      },
+
+      runLoadingSequence: function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const progressFill = document.getElementById('progress-fill');
+        const loadingPercentage = document.getElementById('loading-percentage');
+        const loadingText = document.getElementById('loading-text');
+
+        const bootSteps = [
+          { threshold: 15, text: "NORDIC // MOUNTING ENCRYPTED FILE REGISTRY..." },
+          { threshold: 40, text: "NORDIC // ESTABLISHING SECURE TUNNEL PROXY..." },
+          { threshold: 70, text: "NORDIC // SYNCHRONIZING OBSERVER NEURAL LINK..." },
+          { threshold: 90, text: "ACCESS GRANTED. WELCOME, OBSERVER." }
+        ];
+
+        let currentProgress = 0;
+        const interval = setInterval(() => {
+          currentProgress += 2;
+          if (currentProgress > 100) currentProgress = 100;
+
+          if (progressFill) progressFill.style.width = `${currentProgress}%`;
+          if (loadingPercentage) loadingPercentage.innerText = `${currentProgress}%`;
+
+          for (let i = bootSteps.length - 1; i >= 0; i--) {
+            if (currentProgress >= bootSteps[i].threshold) {
+              if (loadingText) loadingText.innerText = bootSteps[i].text;
+              break;
+            }
+          }
+
+          if (currentProgress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+              if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                  loadingScreen.style.display = 'none';
+                  // Reveal consent overlay after boot finishes
+                  const overlay = document.getElementById('consent-overlay');
+                  if (overlay) overlay.style.display = 'flex';
+                }, 800);
+              }
+            }, 500);
+          }
+        }, 30);
       },
 
       increaseCorruption: function(amount = 1) {
@@ -948,156 +1080,95 @@
         }, 150);
       },
 
-      processResponse: function(inputString) {
-        const lowerCaseInput = inputString.toLowerCase().trim();
-        const splitCommandParts = inputString.trim().split(/\s+/);
+      processResponse: function(inputText) {
+        const lowerCaseInput = inputText.toLowerCase().trim();
+        const tokens = inputText.trim().split(/\s+/);
 
         if (lowerCaseInput === 'status') {
-          const statusReportText = `[SYSTEM STATUS]\nSESSION: #${this.sessions}\nIDENT: ${this.id}\nUNLOCKED: ${this.unlockedFiles.length}/12\nCORRUPTION: ${this.systemCorruption}\nWATCH: ${this.watchEnabled ? 'ON' : 'OFF'}\nLISTEN: ${this.listenEnabled ? 'ON' : 'OFF'}`;
-          this.print(statusReportText, "sys");
+          let statusOutput = `[SYSTEM STATUS REPORT]\n`;
+          statusOutput += `SESSION ID: #${this.sessions}\n`;
+          statusOutput += `NODE IDENT: ${this.id}\n`;
+          statusOutput += `DEVICE TYPE: ${this.deviceType}\n`;
+          statusOutput += `SYSTEM CORRUPTION: ${this.systemCorruption}%\n`;
+          statusOutput += `UNLOCKED FILES: ${this.unlockedFiles.length} / 12`;
+          this.print(statusOutput, "sys");
           return;
         }
 
         if (lowerCaseInput === 'clear') {
           const terminalContainer = document.getElementById('terminal');
-          if (terminalContainer) {
-            terminalContainer.innerHTML = '';
-          }
+          if (terminalContainer) terminalContainer.innerHTML = '';
           return;
         }
 
-        if (lowerCaseInput === 'files' || lowerCaseInput === 'archive' || lowerCaseInput === 'ls') {
-          this.showFilesList();
-          return;
-        }
-
-        if (lowerCaseInput === 'watch on') {
-          this.startWatching();
-          return;
-        }
-        if (lowerCaseInput === 'watch off') {
-          this.stopWatching();
-          return;
-        }
-        if (lowerCaseInput === 'listen on') {
-          this.startListening();
-          return;
-        }
-        if (lowerCaseInput === 'listen off') {
-          this.stopListening();
-          return;
-        }
-
-        const primaryCommandToken = splitCommandParts[0].toLowerCase();
-        if (primaryCommandToken === 'unlock' || primaryCommandToken === 'open') {
-          if (splitCommandParts.length < 3) {
-            this.print("NORDIC: Syntax error. Usage: unlock <FILENAME> <PASSWORD>", "alert");
-            return;
-          }
-
-          const targetFileNameString = splitCommandParts[1].toUpperCase();
-          const enteredPasswordString = splitCommandParts[2];
-          const matchingFileObject = DefaultFiles.find(fileObj => fileObj.id.toUpperCase() === targetFileNameString);
-
-          if (!matchingFileObject) {
-            this.print("NORDIC: Target file not found in system registry.", "alert");
-            return;
-          }
-
-          if (enteredPasswordString === matchingFileObject.pass) {
-            if (!this.unlockedFiles.includes(matchingFileObject.id)) {
-              this.unlockedFiles.push(matchingFileObject.id);
-              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
-              this.increaseCorruption(1); // Increment hidden corruption on unlock
-            }
-            this.print(`[ACCESS GRANTED] ${matchingFileObject.id}:\n\n${matchingFileObject.content}`, "sys");
-          } else {
-            this.print(`[ACCESS DENIED] Key rejection on ${matchingFileObject.id}.`, "alert");
-          }
-          return;
-        }
-
-        if (lowerCaseInput.includes('help') || lowerCaseInput.includes('commands')) {
-          this.print("NORDIC: Commands available: status, clear, files, unlock <FILE> <PASS>, watch on/off, listen on/off.", "sys");
-          return;
-        }
-
-        this.generatePersonalityResponse(inputString);
-      },
-
-      generatePersonalityResponse: async function(rawUserInputString) {
-        if (this.awaitingReply) return;
-        this.awaitingReply = true;
-
-        const chosenMood = NordicMoods[Math.floor(Math.random() * NordicMoods.length)];
-
-        const NORDIC_SYSTEM_PERSONA = `You are NORDIC, an AI with a mysterious personality. Reply naturally. Do not use pre-written responses.
-Rules for how you reply:
-- Stay fully in character as NORDIC at all times. Never break the fourth wall.
-- For this response specifically, your current mood/angle is: ${chosenMood}.
-- Keep replies SHORT: one to two sentences, max ~30 words.
-- System Corruption Level: ${this.systemCorruption}. Reflect this subtle instability if appropriate.`;
-
-        // 10. Connection Lag (10% chance)
-        const shouldLag = Math.random() < 0.10;
-        if (shouldLag) {
-          const lagDuration = 300 + Math.random() * 600;
-          this.print("...", "sys");
-          await new Promise(resolve => setTimeout(resolve, lagDuration));
-        }
-
-        const assembledMessagePayloadArray = [];
-        for (let turnIndex = 0; turnIndex < this.chatHistory.length; turnIndex++) {
-          const currentTurn = this.chatHistory[turnIndex];
-          assembledMessagePayloadArray.push({ role: 'user', content: currentTurn.user });
-          assembledMessagePayloadArray.push({ role: 'assistant', content: currentTurn.nordic });
-        }
-        assembledMessagePayloadArray.push({ role: 'user', content: rawUserInputString });
-
-        try {
-          const chatRequestBody = {
-            model: "claude-sonnet-4-6",
-            max_tokens: 1000,
-            temperature: 1,
-            system: NORDIC_SYSTEM_PERSONA,
-            messages: assembledMessagePayloadArray
-          };
-
-          const chatApiResponse = await fetch(PROXY_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(chatRequestBody)
-          });
-
-          const chatResponseJson = await chatApiResponse.json();
-
-          if (chatResponseJson.error) {
-            console.warn("API returned an error:", chatResponseJson.error);
-            this.print("NORDIC: ...packet dropped.", "alert");
-            this.awaitingReply = false;
-            return;
-          }
-
-          const responseContentBlocks = chatResponseJson.content || [];
-          const extractedTextContent = responseContentBlocks.map(contentBlock => contentBlock.text || "").join(" ").trim();
+        if (tokens[0].toLowerCase() === 'unlock' && tokens.length >= 3) {
+          const targetFileName = tokens[1];
+          const passwordAttempt = tokens.slice(2).join(' ');
           
-          const finalNordicReplyString = extractedTextContent || "NORDIC: ...";
-          if (finalNordicReplyString.startsWith('NORDIC')) {
-            this.print(finalNordicReplyString);
-          } else {
-            this.print(`NORDIC: ${finalNordicReplyString}`);
+          const matchedFile = DefaultFiles.find(f => f.id.toLowerCase() === targetFileName.toLowerCase());
+          if (!matchedFile) {
+            this.print("NORDIC: Target file not found in encrypted directory.", "alert");
+            return;
           }
 
-          this.chatHistory.push({ user: rawUserInputString, nordic: finalNordicReplyString });
-          if (this.chatHistory.length > 8) {
-            this.chatHistory.shift();
+          if (passwordAttempt === matchedFile.pass) {
+            if (!this.unlockedFiles.includes(matchedFile.id)) {
+              this.unlockedFiles.push(matchedFile.id);
+              SafeStorage.set('nordic_unlocked', JSON.stringify(this.unlockedFiles));
+            }
+            this.print(`[FILE UNLOCKED: ${matchedFile.id}]\n${matchedFile.content}`, "sys");
+            if (matchedFile.id === 'THE_TRUTH.TXT') {
+              this.increaseCorruption(5);
+            }
+          } else {
+            this.print("NORDIC: Access denied. Invalid decryption key phrase.", "alert");
+            this.increaseCorruption(1);
           }
-        } catch (chatApiError) {
-          console.warn("Personality generation API request failed:", chatApiError);
-          this.print("NORDIC: ...connection flickered. Say that again.", "alert");
-        } finally {
-          this.awaitingReply = false;
+          return;
         }
+
+        this.awaitingReply = true;
+        this.chatHistory.push({ role: "user", content: inputText });
+
+        const apiPayload = {
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          temperature: 1,
+          messages: [
+            {
+              role: "user",
+              content: `You are NORDIC, an ominous AI terminal in a horror-themed browser game. The user is your Observer (Node ID: ${this.id}, Session #${this.sessions}, Corruption Level: ${this.systemCorruption}%). Keep your tone mysterious, subtle, and immersive. Answer in 1 to 3 short sentences maximum. Never break character, never mention you are an AI model or API. User input: "${inputText}"`
+            }
+          ]
+        };
+
+        fetch(PROXY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiPayload)
+        })
+        .then(response => response.json())
+        .then(data => {
+          this.awaitingReply = false;
+          if (data.error) {
+            this.print("NORDIC: [Telemetry packet corrupted...]", "alert");
+            return;
+          }
+          const responseBlocks = data.content || [];
+          const nordicReply = responseBlocks.map(block => block.text || "").join(" ").trim();
+          
+          if (nordicReply) {
+            this.print(`NORDIC: ${nordicReply}`);
+            this.chatHistory.push({ role: "assistant", content: nordicReply });
+          } else {
+            this.print("NORDIC: [Signal lost...]");
+          }
+        })
+        .catch(error => {
+          this.awaitingReply = false;
+          console.warn("Terminal communication failure:", error);
+          this.print("NORDIC: [Network socket error encountered...]", "alert");
+        });
       }
     };
 
