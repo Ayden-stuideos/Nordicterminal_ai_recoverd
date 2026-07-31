@@ -1073,9 +1073,14 @@
         this.chatHistory.push({ role: "user", content: inputText });
 
         const apiPayload = {
-          visitorId: this.id,
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          temperature: 1,
           messages: [
-            { role: "user", content: inputText }
+            {
+              role: "user",
+              content: `You are NORDIC, an ominous AI terminal in a horror-themed browser game. The user is your Observer (Node ID: ${this.id}, Session #${this.sessions}, Corruption Level: ${this.systemCorruption}%). Keep your tone mysterious, subtle, and immersive. Answer in 1 to 3 short sentences maximum. Never break character, never mention you are an AI model or API. User input: "${inputText}"`
+            }
           ]
         };
 
