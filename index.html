@@ -43,7 +43,6 @@
       position: relative;
     }
 
-    /* Scanline Animation & Movement */
     @keyframes slowScanline {
       0% { background-position: 0 0; }
       100% { background-position: 0 8px; }
@@ -64,7 +63,6 @@
       animation: slowScanline 12s linear infinite;
     }
 
-    /* Extremely faint animated film grain overlay */
     body::after {
       content: " ";
       display: block;
@@ -76,7 +74,6 @@
       opacity: 0.025;
     }
 
-    /* Alert border glow class */
     body.alert-glow {
       border-color: var(--alert-red) !important;
       box-shadow: 0 0 12px rgba(255, 59, 48, 0.4);
@@ -171,7 +168,6 @@
       border-radius: 0;
     }
 
-    /* Natural Cursor Blinking */
     .cursor-blink {
       animation: blinkCursor 1s infinite;
     }
@@ -251,9 +247,6 @@
       transform: scaleX(-1); 
     }
 
-    /* ==========================================
-       CUSTOM NORDIC BOOT SEQUENCE SCREEN STYLES
-       ========================================== */
     #loading-screen {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -542,7 +535,6 @@
           });
         }
 
-        // Run the custom loading boot sequence set to exactly 7 seconds (7000ms) with red logo
         this.runLoadingSequence();
       },
 
@@ -560,7 +552,6 @@
         ];
 
         let currentProgress = 0;
-        // Total duration = 7000ms (7 seconds).
         const totalDuration = 7000;
         const intervalTime = 50;
         const incrementPerTick = 100 / (totalDuration / intervalTime);
@@ -586,7 +577,6 @@
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => {
                   loadingScreen.style.display = 'none';
-                  // Reveal consent overlay after boot finishes
                   const overlay = document.getElementById('consent-overlay');
                   if (overlay) overlay.style.display = 'flex';
                 }, 800);
@@ -689,7 +679,6 @@
           });
         }
 
-        // Setup Cursor Blink & Activity Listeners
         if (inputField) {
           inputField.addEventListener('input', () => {
             this.updateActivity();
@@ -714,7 +703,6 @@
       },
 
       initVisualEngineEffects: function() {
-        // 1. Random Screen Flicker Engine (20-60s scaled by corruption)
         const runFlicker = () => {
           const corruptionMultiplier = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
           const nextTime = (20000 + Math.random() * 40000) * corruptionMultiplier;
@@ -733,7 +721,6 @@
         };
         runFlicker();
 
-        // 2. Terminal Glitch Engine (Once every 2-5 minutes)
         const runGlitch = () => {
           const corruptionMultiplier = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
           const nextGlitchTime = (120000 + Math.random() * 180000) * corruptionMultiplier;
@@ -752,7 +739,6 @@
         };
         runGlitch();
 
-        // 5. Idle Effects Engine (45-90 seconds inactivity)
         setInterval(() => {
           const inactiveDuration = Date.now() - this.lastActivityTimestamp;
           const targetIdleTime = (45000 + Math.random() * 45000);
@@ -771,7 +757,7 @@
             }
 
             this.print(`NORDIC: ${messageToPrint}`, "vision");
-            this.updateActivity(); // reset idle timer loop trigger
+            this.updateActivity();
           }
         }, 10000);
       },
@@ -792,7 +778,6 @@
           this.flashAlertBorder();
         }
 
-        // 3. NORDIC Message Distortion (15% chance for 1 frame)
         let processedText = messageText;
         if (messageType === 'nordic' && Math.random() < 0.15) {
           processedText = processedText.replace('NORDIC', () => {
@@ -810,7 +795,6 @@
       },
 
       bootSequence: function() {
-        // 4. Custom Boot Sequence animation
         const terminalContainer = document.getElementById('terminal');
         if (terminalContainer) terminalContainer.innerHTML = '';
 
@@ -1146,6 +1130,7 @@
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
           temperature: 1,
+          visitorId: this.id,
           messages: [
             {
               role: "user",
