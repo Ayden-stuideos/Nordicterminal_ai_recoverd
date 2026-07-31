@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — SECURE TERMINAL (EXACT LOGO BUILD)</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL (EXACT LOGO TRACE)</title>
   <style>
     :root {
       --bg-color: #0F172A;
@@ -251,26 +251,40 @@
 
     .loading-content {
       width: 100%;
-      max-width: 340px;
+      max-width: 320px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 14px;
     }
 
-    /* MATCHING EXACT LOGO GEOMETRY: 
-       - Outer Triangle 
-       - Inner Horizontal Split / Hexagon Core
-       - Intersecting Vertical & Diagonal Nodes */
-    .nordic-exact-logo {
-      width: 130px;
-      height: 130px;
+    /* TRACED EXACT LOGO MATCHING SCREENSHOT REFERENCE */
+    .nordic-traced-logo-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
       animation: logoPulse 2.5s ease-in-out infinite;
     }
 
+    .nordic-traced-logo {
+      width: 140px;
+      height: 110px;
+      filter: drop-shadow(0 0 10px rgba(255, 59, 48, 0.7));
+    }
+
+    .nordic-logo-text {
+      font-family: var(--font-stack);
+      font-weight: 900;
+      font-size: 1.6rem;
+      letter-spacing: 5px;
+      color: #FF3B30;
+      text-shadow: 0 0 10px rgba(255, 59, 48, 0.7);
+    }
+
     @keyframes logoPulse {
-      0%, 100% { filter: drop-shadow(0 0 10px rgba(0,229,255,0.5)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 22px rgba(0,229,255,0.9)); transform: scale(1.03); }
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.5)); }
+      50% { transform: scale(1.03); filter: drop-shadow(0 0 18px rgba(255, 59, 48, 0.9)); }
     }
 
     .loading-status-line {
@@ -308,21 +322,14 @@
 
   <div id="loading-screen">
     <div class="loading-content">
-      <svg class="nordic-exact-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,4 6,94 94,94" fill="none" stroke="#00E5FF" stroke-width="4" stroke-linejoin="round" />
-        
-        <line x1="50" y1="4" x2="50" y2="94" stroke="#00E5FF" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
-        <line x1="28" y1="52" x2="72" y2="52" stroke="#00E5FF" stroke-width="1.5" opacity="0.8"/>
-        
-        <polygon points="50,34 64,46 64,68 50,78 36,68 36,46" fill="rgba(0, 229, 255, 0.06)" stroke="#0099CC" stroke-width="2"/>
-        
-        <circle cx="50" cy="57" r="6" fill="none" stroke="#FF3B30" stroke-width="2.5" />
-        <circle cx="50" cy="57" r="2" fill="#FF3B30" />
-        
-        <circle cx="50" cy="4" r="2" fill="#00E5FF" />
-        <circle cx="6" cy="94" r="2" fill="#00E5FF" />
-        <circle cx="94" cy="94" r="2" fill="#00E5FF" />
-      </svg>
+      <div class="nordic-traced-logo-container">
+        <svg class="nordic-traced-logo" viewBox="0 0 140 100" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="70,4 132,94 8,94" fill="none" stroke="#FF3B30" stroke-width="4.5" stroke-linejoin="round" />
+          
+          <polygon points="70,38 103,84 37,84" fill="none" stroke="#FF3B30" stroke-width="3.5" stroke-linejoin="round" />
+        </svg>
+        <div class="nordic-logo-text">NORDIC</div>
+      </div>
 
       <div id="loading-text" class="loading-status-line">NORDIC // MOUNTING KERNEL...</div>
       
