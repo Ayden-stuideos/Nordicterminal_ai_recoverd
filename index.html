@@ -3,15 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>PROJECT // NORDIC — SECURE TERMINAL (PIXEL-PERFECT ALIGNED BUILD)</title>
+  <title>PROJECT // NORDIC — SECURE TERMINAL (CONTAINMENT BUILD)</title>
   <style>
     :root {
-      --bg-color: #0F172A;
-      --text-color: #E2F8FF;
-      --primary-cyan: #00E5FF;
-      --deep-cyan: #0099CC;
-      --alert-red: #FF3B30;
-      --secondary-grey: #5E5E5E;
+      /* Containment Palette */
+      --bg-color: #06080B;
+      --panel-color: #11151B;
+      --text-color: #B6C2CF;
+      --text-muted: #667387;
+      --primary-cyan: #38D9FF;
+      --deep-cyan: #1A5F7A;
+      --warning-red: #E63946;
+      --critical-red: #C1121F;
+      --breach-red: #7F0000;
+      --success-green: #46D369;
+      --amber: #F4A300;
+      --border-color: #273243;
       --font-stack: "Courier New", Courier, monospace;
       --crt-brightness: 1;
       --scanline-opacity: 0.25;
@@ -39,7 +46,7 @@
       display: flex;
       flex-direction: column;
       padding: 12px;
-      border: 2px solid var(--deep-cyan);
+      border: 2px solid var(--border-color);
       position: relative;
     }
 
@@ -72,12 +79,12 @@
     }
 
     body.alert-glow {
-      border-color: var(--alert-red) !important;
-      box-shadow: 0 0 12px rgba(255, 59, 48, 0.4);
+      border-color: var(--warning-red) !important;
+      box-shadow: 0 0 12px rgba(230, 57, 70, 0.4);
     }
 
     header {
-      border-bottom: 1px solid var(--secondary-grey);
+      border-bottom: 1px solid var(--border-color);
       padding-bottom: 6px;
       margin-bottom: 8px;
       display: flex;
@@ -127,17 +134,20 @@
       display: block; 
     }
     p.sys { color: var(--deep-cyan); }
-    p.alert { color: var(--alert-red); font-weight: bold; }
+    p.alert { color: var(--warning-red); font-weight: bold; }
+    p.critical { color: var(--critical-red); font-weight: bold; }
+    p.breach { color: var(--breach-red); font-weight: bold; }
     p.nordic { color: var(--text-color); }
     p.user { color: var(--primary-cyan); }
-    p.vision { color: #B388FF; font-style: italic; }
+    p.vision { color: var(--amber); font-style: italic; }
+    p.success { color: var(--success-green); }
 
     #input-form {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-top: 8px;
-      border-top: 1px solid var(--secondary-grey);
+      border-top: 1px solid var(--border-color);
       padding-top: 8px;
       flex-shrink: 0;
     }
@@ -186,7 +196,7 @@
       padding: 20px;
       max-width: 450px;
       width: 100%;
-      background: rgba(0, 229, 255, 0.03);
+      background: rgba(56, 217, 255, 0.03);
     }
 
     .consent-box h2 { 
@@ -258,7 +268,6 @@
       gap: 14px;
     }
 
-    /* PIXEL-PERFECT ALIGNED GEOMETRY + STRONG BLOOM */
     .nordic-traced-logo-container {
       display: flex;
       flex-direction: column;
@@ -270,22 +279,21 @@
     .nordic-traced-logo {
       width: 150px;
       height: 135px;
-      filter: drop-shadow(0 0 16px rgba(255, 59, 48, 0.95)) drop-shadow(0 0 32px rgba(255, 59, 48, 0.5));
+      filter: drop-shadow(0 0 16px rgba(230, 57, 70, 0.95)) drop-shadow(0 0 32px rgba(230, 57, 70, 0.5));
     }
 
-    /* FUTURISTIC BLOCKY FONT */
     .nordic-logo-text {
       font-family: "Impact", Charcoal, sans-serif;
       font-weight: 900;
       font-size: 1.8rem;
       letter-spacing: 6px;
-      color: #FF3B30;
-      text-shadow: 0 0 12px rgba(255, 59, 48, 0.9), 0 0 24px rgba(255, 59, 48, 0.6);
+      color: #E63946;
+      text-shadow: 0 0 12px rgba(230, 57, 70, 0.9), 0 0 24px rgba(230, 57, 70, 0.6);
     }
 
     @keyframes logoPulse {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(255, 59, 48, 0.8)); }
-      50% { transform: scale(1.04); filter: drop-shadow(0 0 28px rgba(255, 59, 48, 1)); }
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(230, 57, 70, 0.8)); }
+      50% { transform: scale(1.04); filter: drop-shadow(0 0 28px rgba(230, 57, 70, 1)); }
     }
 
     @keyframes glitchAnim {
@@ -314,7 +322,7 @@
       height: 12px;
       border: 1px solid var(--primary-cyan);
       padding: 2px;
-      background: rgba(0, 229, 255, 0.02);
+      background: rgba(56, 217, 255, 0.02);
     }
 
     .progress-bar-fill {
@@ -327,7 +335,7 @@
 
     .loading-percentage {
       font-size: 0.7rem;
-      color: var(--secondary-grey);
+      color: var(--text-muted);
       letter-spacing: 1px;
     }
   </style>
@@ -338,13 +346,13 @@
     <div class="loading-content">
       <div id="logo-wrapper" class="nordic-traced-logo-container">
         <svg class="nordic-traced-logo" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="50,4 74,44 26,44" fill="none" stroke="#FF3B30" stroke-width="4.8" stroke-linejoin="round" />
+          <polygon points="50,4 74,44 26,44" fill="none" stroke="#E63946" stroke-width="4.8" stroke-linejoin="round" />
           
-          <polygon points="4,82 50,82 27,44" fill="none" stroke="#FF3B30" stroke-width="4.8" stroke-linejoin="round" />
+          <polygon points="4,82 50,82 27,44" fill="none" stroke="#E63946" stroke-width="4.8" stroke-linejoin="round" />
           
-          <polygon points="50,82 96,82 73,44" fill="none" stroke="#FF3B30" stroke-width="4.8" stroke-linejoin="round" />
+          <polygon points="50,82 96,82 73,44" fill="none" stroke="#E63946" stroke-width="4.8" stroke-linejoin="round" />
           
-          <polygon points="50,70 72,45 28,45" fill="none" stroke="#FF3B30" stroke-width="4.5" stroke-linejoin="round" />
+          <polygon points="50,70 72,45 28,45" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" />
         </svg>
         <div class="nordic-logo-text">NORDIC</div>
       </div>
