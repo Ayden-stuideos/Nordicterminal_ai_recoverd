@@ -6,7 +6,6 @@
   <title>PROJECT // NORDIC — SECURE TERMINAL (CONTAINMENT BUILD)</title>
   <style>
     :root {
-      /* Containment Palette */
       --bg-color: #06080B;
       --panel-color: #11151B;
       --text-color: #B6C2CF;
@@ -276,19 +275,11 @@
       animation: logoPulse 2.5s ease-in-out infinite;
     }
 
-    .nordic-traced-logo {
-      width: 150px;
-      height: 150px;
+    .nordic-traced-logo-image {
+      width: 240px;
+      max-width: 80vw;
+      border-radius: 6px;
       filter: drop-shadow(0 0 16px rgba(230, 57, 70, 0.95)) drop-shadow(0 0 32px rgba(230, 57, 70, 0.5));
-    }
-
-    .nordic-logo-text {
-      font-family: "Impact", Charcoal, sans-serif;
-      font-weight: 900;
-      font-size: 1.8rem;
-      letter-spacing: 6px;
-      color: #E63946;
-      text-shadow: 0 0 12px rgba(230, 57, 70, 0.9), 0 0 24px rgba(230, 57, 70, 0.6);
     }
 
     @keyframes logoPulse {
@@ -345,22 +336,7 @@
   <div id="loading-screen">
     <div class="loading-content">
       <div id="logo-wrapper" class="nordic-traced-logo-container">
-        <svg class="nordic-traced-logo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <!-- Sierpinski Triangle: One large triangle with 3 smaller triangles on sides, creating a 4th triangle in the middle -->
-          
-          <!-- Top triangle -->
-          <polygon points="60,10 80,50 40,50" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" />
-          
-          <!-- Bottom-left triangle -->
-          <polygon points="30,60 50,100 10,100" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" />
-          
-          <!-- Bottom-right triangle -->
-          <polygon points="90,60 110,100 70,100" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" />
-          
-          <!-- Outer border triangle (connects all three) -->
-          <polygon points="60,10 110,100 10,100" fill="none" stroke="#E63946" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" />
-        </svg>
-        <div class="nordic-logo-text">NORDIC</div>
+        <img src="nordic-logo.jpg" class="nordic-traced-logo-image" alt="NORDIC" />
       </div>
 
       <div id="loading-text" class="loading-status-line">NORDIC // MOUNTING KERNEL...</div>
@@ -528,6 +504,35 @@
         const incrementPerTick = 100 / (totalDuration / intervalTime);
         let glitched = false;
 
+        const glitchTexts = [
+          "[SIGNAL DESYNC]",
+          "N0RDIC // CORE FRACTURE",
+          "...WHO IS WATCHING?",
+          "MEMORY BLOCK CORRUPTED",
+          "SYSTEM INTEGRITY: 47%",
+          "[UNAUTHORIZED PROCESS]",
+          "IT SEES YOU NOW"
+        ];
+
+        const glitchTimings = [];
+        for (let i = 0; i < 7; i++) {
+          glitchTimings.push(Math.floor((totalDuration / 7) * i + Math.random() * (totalDuration / 10)));
+        }
+
+        glitchTimings.forEach((delay, index) => {
+          setTimeout(() => {
+            if (logoWrapper) logoWrapper.classList.add('glitching');
+            if (loadingText) loadingText.innerText = glitchTexts[index % glitchTexts.length];
+            document.body.classList.add('alert-glow');
+
+            const burstDuration = 150 + Math.random() * 200;
+            setTimeout(() => {
+              if (logoWrapper) logoWrapper.classList.remove('glitching');
+              document.body.classList.remove('alert-glow');
+            }, burstDuration);
+          }, delay);
+        });
+
         const interval = setInterval(() => {
           currentProgress += incrementPerTick;
           if (currentProgress > 100) currentProgress = 100;
@@ -537,7 +542,9 @@
 
           for (let i = bootSteps.length - 1; i >= 0; i--) {
             if (currentProgress >= bootSteps[i].threshold) {
-              if (loadingText) loadingText.innerText = bootSteps[i].text;
+              if (loadingText && !document.body.classList.contains('alert-glow')) {
+                loadingText.innerText = bootSteps[i].text;
+              }
               break;
             }
           }
