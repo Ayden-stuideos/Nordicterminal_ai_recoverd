@@ -346,14 +346,19 @@
     <div class="loading-content">
       <div id="logo-wrapper" class="nordic-traced-logo-container">
         <svg class="nordic-traced-logo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <!-- Top triangle (pointing up) -->
-          <polygon points="60,15 105,95 15,95" fill="none" stroke="#E63946" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round" />
+          <!-- Sierpinski Triangle: One large triangle with 3 smaller triangles on sides, creating a 4th triangle in the middle -->
           
-          <!-- Bottom-left triangle (pointing down-right) -->
-          <polygon points="35,55 60,105 10,80" fill="none" stroke="#E63946" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round" />
+          <!-- Top triangle -->
+          <polygon points="60,10 80,50 40,50" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" />
           
-          <!-- Bottom-right triangle (pointing down-left) -->
-          <polygon points="85,55 110,80 60,105" fill="none" stroke="#E63946" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round" />
+          <!-- Bottom-left triangle -->
+          <polygon points="30,60 50,100 10,100" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" />
+          
+          <!-- Bottom-right triangle -->
+          <polygon points="90,60 110,100 70,100" fill="none" stroke="#E63946" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" />
+          
+          <!-- Outer border triangle (connects all three) -->
+          <polygon points="60,10 110,100 10,100" fill="none" stroke="#E63946" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" />
         </svg>
         <div class="nordic-logo-text">NORDIC</div>
       </div>
