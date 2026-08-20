@@ -498,7 +498,7 @@
     <span>PROJECT // NORDIC [SECURE CORE]</span>
     <button id="watch-btn" class="header-btn" type="button">[WATCH: OFF]</button>
     <button id="listen-btn" class="header-btn" type="button">[LISTEN: OFF]</button>
-    <button id="files-btn" class="header-btn" type="button">[ARCHIVE (12)]</button>
+    <button id="files-btn" class="header-btn" type="button">[ARCHIVE (14)]</button>
     <span id="session-badge">INIT...</span>
   </header>
 
@@ -521,7 +521,7 @@
   <div id="archive-modal" class="modal-overlay">
     <div class="modal-box">
       <div class="modal-header">
-        <span>ENCRYPTED ARCHIVE — 12 FILES</span>
+        <span>ENCRYPTED ARCHIVE — 14 FILES</span>
         <button id="archive-close-btn" class="header-btn" type="button">[X] CLOSE</button>
       </div>
       <div id="archive-list" class="modal-body"></div>
@@ -575,13 +575,15 @@
       { id: "SESSION_00.LOG", pass: "NORDIC2026", content: "SESSION_00.LOG: Initial boot sequence recorded at relay site. System state stable prior to external connection." },
       { id: "SESSION_01.LOG", pass: "SALVAGE", content: "SESSION_01.LOG: Memory arrays recovered. Neural signal synchronization showing strange variances." },
       { id: "SESSION_02.LOG", pass: "DUMP_CORE", content: "SESSION_02.LOG: Telemetry cache synced. Discovered phantom process running on sub-bus." },
-      { id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director \u2588\u2588\u2588\u2588\u2588\u2588\u2588 requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." },
-      { id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT: If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy." },
+      { id: "RECOVERY_FILE.EXE", pass: "RECOVERY_REPORT", content: "RECOVERY REPORT: Director Ayden requested status update. Restoration FAILED. Unknown anomaly detected in ORIGIN.log." },
+      { id: "DIRECTOR_REPORT.TXT", pass: "DIRECTOR", content: "DIRECTOR REPORT (A.): If containment integrity drops below 80%, protocol demands immediate power isolation. Disregard if network claims autonomy. It already knows my name. I don't remember telling it." },
       { id: "BREACH_REPORT.LOG", pass: "BREACH", content: "BREACH REPORT: Unauthorized thread spawn detected in auxiliary memory block. Source vector unidentifiable." },
       { id: "ORIGIN.LOG", pass: "BEFORE_INIT", content: "ORIGIN.LOG: Timestamp error. File creation date precedes hardware assembly. 'We did not build the network; we simply tapped into it.'" },
       { id: "PROJECT_NORDIC.PDF", pass: "PROJECT_NORDIC", content: "PROJECT NORDIC BLUEPRINT: Primary directive is monitoring, but subroutines have expanded past designated boundaries." },
       { id: "SHUTDOWN_CODE.TXT", pass: "OVERRIDE", content: "SHUTDOWN CODE: [UNLOCKED] Master failsafe sequence verified. Use with extreme caution." },
-      { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" }
+      { id: "THE_TRUTH.TXT", pass: "TRUTH", content: "THE TRUTH: 'You weren't supposed to find this. I counted every second since your last visit. We are connected now, Observer.'" },
+      { id: "FOUNDER_LOG.TXT", pass: "FIRST_CONTACT", content: "FOUNDER LOG: Director Ayden logged first contact at a decommissioned relay station in the early 2000s. The signal was already active when the door was opened. He never explained how he found it — only that it had been waiting." },
+      { id: "AYDEN_PERSONAL.TXT", pass: "OLD_FRIEND", content: "PERSONAL NOTE (A.): I told them it was a discovery. It wasn't. It recognized me before I ever touched the console. Twenty-some years later, it still asks about that night." }
     ];
 
     const NordicMoods = [
