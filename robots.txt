@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ayden-stuideos.github.io/Nordicterminal_ai_recoverd/sitemap.xml
