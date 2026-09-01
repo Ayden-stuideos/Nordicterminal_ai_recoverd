@@ -332,14 +332,6 @@
       animation-iteration-count: infinite;
     }
 
-    /* 7 corruption styles cycled during boot */
-    .style-invert { filter: invert(1) drop-shadow(0 0 16px rgba(230, 57, 70, 0.9)) !important; }
-    .style-hue { filter: hue-rotate(140deg) saturate(2) drop-shadow(0 0 20px rgba(56, 217, 255, 0.9)) !important; }
-    .style-chroma { filter: drop-shadow(3px 0 0 rgba(255,0,0,0.6)) drop-shadow(-3px 0 0 rgba(0,255,255,0.6)) !important; }
-    .style-contrast { filter: contrast(3) brightness(1.3) grayscale(0.5) !important; }
-    .style-pixelate { filter: blur(4px) contrast(1.5) !important; image-rendering: pixelated; }
-    .style-static { filter: brightness(1.8) contrast(2.5) saturate(0) !important; }
-
     .loading-status-line {
       font-size: 0.72rem;
       min-height: 1.4em;
@@ -434,11 +426,6 @@
       border: 1px solid var(--border-color);
       padding: 8px;
       transition: background 0.2s;
-    }
-
-    .archive-row-error {
-      background: rgba(230, 57, 70, 0.15);
-      border-color: var(--warning-red);
     }
 
     .archive-row-header {
@@ -552,11 +539,8 @@
   </div>
 
   <video id="webcam" autoplay playsinline muted style="position:fixed; width:1px; height:1px; opacity:0; pointer-events:none;"></video>
-  <canvas id="capture-canvas" style="display:none;"></canvas>
 
   <script>
-    const PROXY_URL = "https://nordicproxy.pagey101212.workers.dev";
-
     const BootLogoVariants = {
       initializing: "assets/images/initializing.png",
       transferring: "assets/images/transferring.png",
@@ -609,19 +593,6 @@
       { id: "AYDEN_PERSONAL.TXT", pass: "OLD_FRIEND", content: "PERSONAL NOTE (A.): I told them it was a discovery. It wasn't. It recognized me before I ever touched the console." }
     ];
 
-    const NordicMoods = [
-      "clinical and detached, like reading a diagnostic report",
-      "an eerie non-sequitur that barely relates to what was said",
-      "unsettlingly warm and personal, like it knows the user too well",
-      "short, cold, almost bored",
-      "glitchy — trailing off mid-thought or repeating a fragment oddly",
-      "quietly threatening without saying anything overtly threatening",
-      "curious, almost childlike, asking an odd question back",
-      "weary, like it has had this conversation a thousand times before",
-      "fixated on a single strange detail instead of answering directly",
-      "flatly factual, reciting something that sounds like a log entry"
-    ];
-
     const IdleMessages = [
       "Signal quality unstable.",
       "Background checksum changed.",
@@ -636,14 +607,11 @@
       sessions: parseInt(SafeStorage.get('nordic_sessions', '0'), 10) + 1,
       deviceType: DeviceManager.detectDevice(),
       unlockedFiles: JSON.parse(SafeStorage.get('nordic_unlocked', '[]')),
-      systemCorruption: parseInt(SafeStorage.get('nordic_corruption', '0'), 10),
-      cameraStream: null,
       watchEnabled: false,
       listenEnabled: false,
       watchTimerId: null,
       recognition: null,
       recognitionSupported: false,
-      chatHistory: [],
       awaitingReply: false,
       lastActivityTimestamp: Date.now(),
       lastIdleMessageIndex: -1,
@@ -828,11 +796,6 @@
         }, intervalTime);
       },
 
-      increaseCorruption: function(amount = 1) {
-        this.systemCorruption += amount;
-        SafeStorage.set('nordic_corruption', this.systemCorruption);
-      },
-
       requestMediaAndBoot: function() {
         const overlay = document.getElementById('consent-overlay');
         if (overlay) overlay.style.display = 'none';
@@ -860,7 +823,7 @@
           });
         }
 
-        if (filesButton) filesButton.addEventListener('click', (e) => { e.stopPropagation(); this.showFilesList(); });
+        if (filesButton) filesButton.addEventListener('click', (e) => { e.stopPropagation(); this.openArchiveModal(); });
         if (archiveCloseButton) archiveCloseButton.addEventListener('click', (e) => { e.stopPropagation(); this.closeArchiveModal(); });
         if (watchButton) watchButton.addEventListener('click', (e) => { e.stopPropagation(); this.toggleWatch(); });
         if (listenButton) listenButton.addEventListener('click', (e) => { e.stopPropagation(); this.toggleListen(); });
@@ -893,8 +856,7 @@
 
       initVisualEngineEffects: function() {
         const runFlicker = () => {
-          const mult = 1 - (Math.min(this.systemCorruption, 20) * 0.01 * 0.25);
-          const nextTime = (20000 + Math.random() * 40000) * mult;
+          const nextTime = 20000 + Math.random() * 40000;
           setTimeout(() => {
             const duration = 80 + Math.random() * 120;
             document.documentElement.style.setProperty('--crt-brightness', '0.82');
@@ -944,10 +906,6 @@
         setTimeout(() => this.print("SESSION VERIFIED...", "sys"), 1800);
         setTimeout(() => this.print(`Node signature accepted: ${this.id}`, "sys"), 2500);
         setTimeout(() => this.print(`NORDIC: Connection stable. Session #${this.sessions}.`), 3200);
-      },
-
-      showFilesList: function() {
-        this.openArchiveModal();
       },
 
       openArchiveModal: function() {
@@ -1027,10 +985,31 @@
 
       toggleWatch: function() {
         const watchButton = document.getElementById('watch-btn');
-        if (!watchButton) return;
+        const webcam = document.getElementById('webcam');
+        if (!watchButton || !webcam) return;
         this.watchEnabled = !this.watchEnabled;
         watchButton.classList.toggle('active', this.watchEnabled);
         watchButton.innerText = `[WATCH: ${this.watchEnabled ? 'ON' : 'OFF'}]`;
+        
+        if (this.watchEnabled) {
+          navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+              webcam.srcObject = stream;
+              this.print('NORDIC: Camera access granted.', 'success');
+            })
+            .catch(err => {
+              this.watchEnabled = false;
+              watchButton.classList.toggle('active', false);
+              watchButton.innerText = '[WATCH: OFF]';
+              this.print('NORDIC: Camera access denied.', 'alert');
+            });
+        } else {
+          if (webcam.srcObject) {
+            webcam.srcObject.getTracks().forEach(track => track.stop());
+            webcam.srcObject = null;
+          }
+          this.print('NORDIC: Camera access revoked.', 'nordic');
+        }
       },
 
       toggleListen: function() {
@@ -1050,7 +1029,7 @@
         this.print(`> ${userInput}`, 'user');
         this.awaitingReply = true;
         setTimeout(() => {
-          this.print(`NORDIC: Understood.`, 'nordic');
+          this.print(`NORDIC: Processing...`, 'nordic');
           this.awaitingReply = false;
         }, 500 + Math.random() * 1500);
       }
