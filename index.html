@@ -320,15 +320,15 @@
 
     @keyframes glitchAnim {
       0% { transform: translate(0, 0) scale(1); opacity: 1; }
-      10% { transform: translate(-18px, 8px) scale(1.03); opacity: 0.7; }
-      20% { transform: translate(16px, -12px) scale(0.97); opacity: 1; }
-      30% { transform: translate(-22px, -6px) scale(1.02); opacity: 0.6; }
-      40% { transform: translate(20px, 14px) scale(0.98); opacity: 1; }
-      50% { transform: translate(-14px, -16px) scale(1.04); opacity: 0.75; }
-      60% { transform: translate(18px, 4px) scale(0.96); opacity: 1; }
-      70% { transform: translate(-20px, 10px) scale(1.03); opacity: 0.65; }
-      80% { transform: translate(15px, -8px) scale(0.99); opacity: 1; }
-      90% { transform: translate(-10px, 6px) scale(1.01); opacity: 0.85; }
+      10% { transform: translate(var(--glitch-x1), var(--glitch-y1)) scale(var(--glitch-s1)); opacity: var(--glitch-o1); }
+      20% { transform: translate(var(--glitch-x2), var(--glitch-y2)) scale(var(--glitch-s2)); opacity: var(--glitch-o2); }
+      30% { transform: translate(var(--glitch-x3), var(--glitch-y3)) scale(var(--glitch-s3)); opacity: var(--glitch-o3); }
+      40% { transform: translate(var(--glitch-x4), var(--glitch-y4)) scale(var(--glitch-s4)); opacity: var(--glitch-o4); }
+      50% { transform: translate(var(--glitch-x5), var(--glitch-y5)) scale(var(--glitch-s5)); opacity: var(--glitch-o5); }
+      60% { transform: translate(var(--glitch-x6), var(--glitch-y6)) scale(var(--glitch-s6)); opacity: var(--glitch-o6); }
+      70% { transform: translate(var(--glitch-x7), var(--glitch-y7)) scale(var(--glitch-s7)); opacity: var(--glitch-o7); }
+      80% { transform: translate(var(--glitch-x8), var(--glitch-y8)) scale(var(--glitch-s8)); opacity: var(--glitch-o8); }
+      90% { transform: translate(var(--glitch-x9), var(--glitch-y9)) scale(var(--glitch-s9)); opacity: var(--glitch-o9); }
       100% { transform: translate(0, 0) scale(1); opacity: 1; }
     }
 
@@ -489,7 +489,7 @@
     <canvas id="glitch-noise-canvas"></canvas>
     <div class="loading-content">
       <div id="logo-wrapper" class="nordic-traced-logo-container">
-        <img id="boot-logo-img-a" src="" class="nordic-traced-logo-image layer-visible" alt="NORDIC" />
+        <img id="boot-logo-img-a" src="assets/images/initializing.png" class="nordic-traced-logo-image layer-visible" alt="NORDIC" />
         <img id="boot-logo-img-b" src="" class="nordic-traced-logo-image layer-hidden" alt="NORDIC" />
       </div>
 
@@ -557,6 +557,14 @@
       complete: "assets/images/complete.png",
       normal: "assets/images/normal.png"
     };
+
+    const BootLogoPreload = Object.values(BootLogoVariants).map((src) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.fetchPriority = 'high';
+      image.src = src;
+      return image;
+    });
 
     const DeviceManager = {
       detectDevice: function() {
@@ -707,7 +715,7 @@
           }, frameDelay);
         };
 
-        const totalDuration = 8000;
+        const totalDuration = 7500;
         const styleSequence = [
           { key: 'initializing', text: "1. INITIALIZING TRANSFER" },
           { key: 'transferring', text: "3. TRANSFERRING DATA" },
@@ -718,40 +726,40 @@
           { key: 'normal', text: "ACCESS GRANTED. WELCOME, OBSERVER." }
         ];
 
-        const stepCount = styleSequence.length;
-        const minStepGap = 350;
-        const weights = styleSequence.map(() => 0.5 + Math.random());
-        const weightSum = weights.reduce((a, b) => a + b, 0);
-        const usableSpan = totalDuration * 0.92;
-        let cumulative = 0;
-        const stepTimings = weights.map((wgt) => {
-          cumulative += (wgt / weightSum) * usableSpan;
-          return Math.max(cumulative, minStepGap);
-        });
+        const stepTimings = [0, 1250, 2400, 3550, 4700, 5850, 7000];
+        const burstMs = 420;
 
-        const burstDurations = styleSequence.map(() => 180 + Math.floor(Math.random() * 500));
+        const randomizeGlitch = (target) => {
+          if (!target) return;
+          const randomInt = (min, max) => Math.floor(min + Math.random() * (max - min + 1));
+          const randomScale = () => (0.96 + Math.random() * 0.08).toFixed(3);
+          const randomOpacity = () => (0.55 + Math.random() * 0.45).toFixed(2);
+
+          for (let i = 1; i <= 9; i++) {
+            target.style.setProperty(`--glitch-x${i}`, `${randomInt(-26, 26)}px`);
+            target.style.setProperty(`--glitch-y${i}`, `${randomInt(-20, 20)}px`);
+            target.style.setProperty(`--glitch-s${i}`, randomScale());
+            target.style.setProperty(`--glitch-o${i}`, randomOpacity());
+          }
+        };
 
         let topLayer = logoImgA;
         let bottomLayer = logoImgB;
-        if (topLayer) topLayer.src = BootLogoVariants[styleSequence[0].key];
-
-        const crossfadeTo = (key) => {
-          if (!bottomLayer || !topLayer) return;
-          bottomLayer.src = BootLogoVariants[key];
-          void bottomLayer.offsetWidth;
-          bottomLayer.classList.remove('layer-hidden');
-          bottomLayer.classList.add('layer-visible');
-          topLayer.classList.remove('layer-visible');
-          topLayer.classList.add('layer-hidden');
-          const temp = topLayer;
-          topLayer = bottomLayer;
-          bottomLayer = temp;
-        };
 
         styleSequence.forEach((step, index) => {
-          const burstMs = burstDurations[index];
           setTimeout(() => {
-            crossfadeTo(step.key);
+            if (index > 0 && bottomLayer && topLayer) {
+              bottomLayer.src = BootLogoVariants[step.key];
+              void bottomLayer.offsetWidth;
+              bottomLayer.classList.remove('layer-hidden');
+              bottomLayer.classList.add('layer-visible');
+              topLayer.classList.remove('layer-visible');
+              topLayer.classList.add('layer-hidden');
+              const temp = topLayer;
+              topLayer = bottomLayer;
+              bottomLayer = temp;
+            }
+
             if (loadingText) {
               loadingText.style.opacity = '0';
               setTimeout(() => {
@@ -759,9 +767,17 @@
                 loadingText.style.opacity = '1';
               }, Math.min(220, burstMs * 0.5));
             }
+
+            randomizeGlitch(logoWrapper);
+            randomizeGlitch(document.body);
+
             if (logoWrapper) {
               logoWrapper.style.animationDuration = `${burstMs}ms`;
               document.body.style.animationDuration = `${burstMs}ms`;
+              logoWrapper.classList.remove('glitching');
+              document.body.classList.remove('glitching');
+              void logoWrapper.offsetWidth;
+              void document.body.offsetWidth;
               logoWrapper.classList.add('glitching');
               document.body.classList.add('glitching');
               setTimeout(() => {
@@ -769,38 +785,36 @@
                 document.body.classList.remove('glitching');
               }, burstMs);
             }
+
             runGlitchBurst(burstMs);
             if (step.key !== 'normal') document.body.classList.add('alert-glow');
             else document.body.classList.remove('alert-glow');
           }, stepTimings[index]);
         });
 
-        let currentProgress = 0;
-        const intervalTime = 50;
-        const incrementPerTick = 100 / (totalDuration / intervalTime);
-
-        const interval = setInterval(() => {
-          currentProgress += incrementPerTick;
-          if (currentProgress > 100) currentProgress = 100;
-
+        const progressStart = performance.now();
+        const updateProgress = (now) => {
+          const elapsed = Math.min(now - progressStart, totalDuration);
+          const currentProgress = (elapsed / totalDuration) * 100;
           if (progressFill) progressFill.style.width = `${currentProgress}%`;
           if (loadingPercentage) loadingPercentage.innerText = `${Math.floor(currentProgress)}%`;
 
-          if (currentProgress >= 100) {
-            clearInterval(interval);
-            document.body.classList.remove('alert-glow');
-            setTimeout(() => {
-              if (loadingScreen) {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                  loadingScreen.style.display = 'none';
-                  const overlay = document.getElementById('consent-overlay');
-                  if (overlay) overlay.style.display = 'flex';
-                }, 800);
-              }
-            }, 400);
+          if (elapsed < totalDuration) {
+            requestAnimationFrame(updateProgress);
+            return;
           }
-        }, intervalTime);
+
+          document.body.classList.remove('alert-glow');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+              loadingScreen.style.display = 'none';
+              const overlay = document.getElementById('consent-overlay');
+              if (overlay) overlay.style.display = 'flex';
+            }, 800);
+          }
+        };
+        requestAnimationFrame(updateProgress);
       },
 
       requestMediaAndBoot: function() {
