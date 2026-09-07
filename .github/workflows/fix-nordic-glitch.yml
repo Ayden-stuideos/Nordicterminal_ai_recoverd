@@ -1,0 +1,51 @@
+name: Fix Nordic boot glitch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message != 'Fix Nordic boot glitch timing and randomness'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch current boot sequence
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old_css = '''    @keyframes glitchAnim {\n      0% { transform: translate(0, 0) scale(1); opacity: 1; }\n      10% { transform: translate(-18px, 8px) scale(1.03); opacity: 0.7; }\n      20% { transform: translate(16px, -12px) scale(0.97); opacity: 1; }\n      30% { transform: translate(-22px, -6px) scale(1.02); opacity: 0.6; }\n      40% { transform: translate(20px, 14px) scale(0.98); opacity: 1; }\n      50% { transform: translate(-14px, -16px) scale(1.04); opacity: 0.75; }\n      60% { transform: translate(18px, 4px) scale(0.96); opacity: 1; }\n      70% { transform: translate(-20px, 10px) scale(1.03); opacity: 0.65; }\n      80% { transform: translate(15px, -8px) scale(0.99); opacity: 1; }\n      90% { transform: translate(-10px, 6px) scale(1.01); opacity: 0.85; }\n      100% { transform: translate(0, 0) scale(1); opacity: 1; }\n    }'''
+          new_css = '''    @keyframes glitchAnim {\n      0% { transform: translate(0, 0) scale(1); opacity: 1; }\n      10% { transform: translate(var(--glitch-x1), var(--glitch-y1)) scale(var(--glitch-s1)); opacity: var(--glitch-o1); }\n      20% { transform: translate(var(--glitch-x2), var(--glitch-y2)) scale(var(--glitch-s2)); opacity: var(--glitch-o2); }\n      30% { transform: translate(var(--glitch-x3), var(--glitch-y3)) scale(var(--glitch-s3)); opacity: var(--glitch-o3); }\n      40% { transform: translate(var(--glitch-x4), var(--glitch-y4)) scale(var(--glitch-s4)); opacity: var(--glitch-o4); }\n      50% { transform: translate(var(--glitch-x5), var(--glitch-y5)) scale(var(--glitch-s5)); opacity: var(--glitch-o5); }\n      60% { transform: translate(var(--glitch-x6), var(--glitch-y6)) scale(var(--glitch-s6)); opacity: var(--glitch-o6); }\n      70% { transform: translate(var(--glitch-x7), var(--glitch-y7)) scale(var(--glitch-s7)); opacity: var(--glitch-o7); }\n      80% { transform: translate(var(--glitch-x8), var(--glitch-y8)) scale(var(--glitch-s8)); opacity: var(--glitch-o8); }\n      90% { transform: translate(var(--glitch-x9), var(--glitch-y9)) scale(var(--glitch-s9)); opacity: var(--glitch-o9); }\n      100% { transform: translate(0, 0) scale(1); opacity: 1; }\n    }'''
+
+          old_js = '''const totalDuration = 8000;'''
+          new_js = '''// Keep the boot sequence exactly 6 seconds. Change only this value if the fixed boot length ever needs tuning.\nconst totalDuration = 6000;'''
+
+          old_timing = '''const stepCount = styleSequence.length;\nconst minStepGap = 350;\nconst weights = styleSequence.map(() => 0.5 + Math.random());\nconst weightSum = weights.reduce((a, b) => a + b, 0);\nconst usableSpan = totalDuration * 0.92;\nlet cumulative = 0;\nconst stepTimings = weights.map((wgt) => {\n  cumulative += (wgt / weightSum) * usableSpan;\n  return Math.max(cumulative, minStepGap);\n});\n\nconst burstDurations = styleSequence.map(() => 180 + Math.floor(Math.random() * 500));'''
+          new_timing = '''// Fixed stage timings: no randomness in when stages happen.\n// Seven stages fit cleanly inside the fixed 6-second boot.\nconst stepTimings = styleSequence.map((_, index) => index * 850);\n\n// The glitch burst length is fixed too; only its visual pattern is randomized.\nconst burstMs = 420;\n\nconst randomizeGlitch = (target) => {\n  if (!target) return;\n  const randomInt = (min, max) => Math.floor(min + Math.random() * (max - min + 1));\n  const randomScale = () => (0.96 + Math.random() * 0.08).toFixed(3);\n  const randomOpacity = () => (0.55 + Math.random() * 0.45).toFixed(2);\n\n  for (let i = 1; i <= 9; i++) {\n    target.style.setProperty(`--glitch-x${i}`, `${randomInt(-26, 26)}px`);\n    target.style.setProperty(`--glitch-y${i}`, `${randomInt(-20, 20)}px`);\n    target.style.setProperty(`--glitch-s${i}`, randomScale());\n    target.style.setProperty(`--glitch-o${i}`, randomOpacity());\n  }\n};'''
+
+          old_burst = '''  const burstMs = burstDurations[index];'''
+          new_burst = '''  const currentBurstMs = burstMs;'''
+
+          old_glitch = '''      logoWrapper.style.animationDuration = `${burstMs}ms`;\n      document.body.style.animationDuration = `${burstMs}ms`;\n      logoWrapper.classList.add('glitching');\n      document.body.classList.add('glitching');\n      setTimeout(() => {\n        logoWrapper.classList.remove('glitching');\n        document.body.classList.remove('glitching');\n      }, burstMs);\n    }\n    runGlitchBurst(burstMs);'''
+          new_glitch = '''      randomizeGlitch(logoWrapper);\n      randomizeGlitch(document.body);\n      logoWrapper.style.animationDuration = `${currentBurstMs}ms`;\n      document.body.style.animationDuration = `${currentBurstMs}ms`;\n      // Restart the animation on every stage so the randomized pattern is always visible.\n      logoWrapper.classList.remove('glitching');\n      document.body.classList.remove('glitching');\n      void logoWrapper.offsetWidth;\n      void document.body.offsetWidth;\n      logoWrapper.classList.add('glitching');\n      document.body.classList.add('glitching');\n      setTimeout(() => {\n        logoWrapper.classList.remove('glitching');\n        document.body.classList.remove('glitching');\n      }, currentBurstMs);\n    }\n    runGlitchBurst(currentBurstMs);'''
+          old_text = '''          setTimeout(() => {\n        loadingText.innerText = step.text;\n        loadingText.style.opacity = '1';\n      }, Math.min(220, burstMs * 0.5));'''
+          new_text = '''          setTimeout(() => {\n        loadingText.innerText = step.text;\n        loadingText.style.opacity = '1';\n      }, Math.min(220, currentBurstMs * 0.5));'''
+
+          replacements = [\n              (old_css, new_css, 'glitch CSS'),\n              (old_js, new_js, 'duration'),\n              (old_timing, new_timing, 'timing/randomizer'),\n              (old_burst, new_burst, 'burst variable'),\n              (old_glitch, new_glitch, 'glitch trigger'),\n              (old_text, new_text, 'text timing'),\n          ]\n          for old, new, label in replacements:\n              if old not in s:\n                  raise SystemExit(f'Current index.html did not match expected {label} block; refusing to modify the file.')\n              if s.count(old) != 1:\n                  raise SystemExit(f'Expected exactly one {label} block; found {s.count(old)}. Refusing to modify the file.')\n              s = s.replace(old, new, 1)\n\n          p.write_text(s, encoding='utf-8')\n          print('Patched current index.html successfully.')\n          PY
+
+      - name: Commit and remove temporary fixer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/fix-nordic-glitch.yml
+          git commit -m "Fix Nordic boot glitch timing and randomness"
+          git push
